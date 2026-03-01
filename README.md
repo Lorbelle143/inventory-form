@@ -191,3 +191,7 @@ MIT License - Northern Bukidnon State College
 ## Support
 
 For issues or questions, contact the NBSC Guidance and Counseling Office.
+
+---
+
+**Version**: 1.0.0 | **Last Updated**: December 2024
