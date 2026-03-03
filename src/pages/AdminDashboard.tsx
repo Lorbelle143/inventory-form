@@ -210,13 +210,35 @@ export default function AdminDashboard() {
         if (error) throw error;
         alert('✅ Record created successfully');
       } else if (modalMode === 'edit') {
+        // Build the full name from the form data
+        const fullName = `${formData.firstName} ${formData.middleInitial} ${formData.lastName}`.trim();
+        
+        // Extract year level from program year (e.g., "BSIT - First year" -> "First")
+        const yearLevel = formData.programYear.split(' ')[0] || '1';
+        
+        // Merge the new form data with existing form_data
+        const existingFormData = selectedSubmission?.form_data || {};
+        const updatedFormData = {
+          ...existingFormData,
+          lastName: formData.lastName,
+          firstName: formData.firstName,
+          middleInitial: formData.middleInitial,
+          idNo: formData.idNo,
+          programYear: formData.programYear,
+          mobilePhone: formData.mobilePhone,
+          birthDate: formData.birthDate,
+          gender: formData.gender,
+          civilStatus: formData.civilStatus,
+          permanentAddress: formData.permanentAddress,
+        };
+
         const updateData: any = {
           student_id: formData.idNo,
-          full_name: `${formData.firstName} ${formData.middleInitial} ${formData.lastName}`.trim(),
+          full_name: fullName,
           course: formData.programYear,
-          year_level: formData.programYear.split(' ')[0] || '1',
+          year_level: yearLevel,
           contact_number: formData.mobilePhone,
-          form_data: formData,
+          form_data: updatedFormData,
         };
 
         // Include photo_url if it was updated
