@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import { supabase } from '../lib/supabase';
 import DocumentScanner from '../components/DocumentScanner';
@@ -7,9 +7,14 @@ import DocumentScanner from '../components/DocumentScanner';
 export default function InventoryForm() {
   const { user } = useAuthStore();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const editId = searchParams.get('edit');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [currentSection, setCurrentSection] = useState(1);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [existingPhotoUrl, setExistingPhotoUrl] = useState('');
+  const [existingDocumentUrls, setExistingDocumentUrls] = useState<string[]>([]);
   const [formData, setFormData] = useState({
     lastName: '', firstName: '', middleInitial: '', programYear: '', birthDate: '',
     idNo: '', gender: '', ethnicity: '', religion: '', civilStatus: '',
@@ -30,6 +35,34 @@ export default function InventoryForm() {
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string>('');
   const [documentFiles, setDocumentFiles] = useState<File[]>([]);
+
+  useEffect(() => {
+    if (editId) {
+      loadExistingSubmission(editId);
+    }
+  }, [editId]);
+
+  const loadExistingSubmission = async (id: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('inventory_submissions')
+        .select('*')
+        .eq('id', id)
+        .single();
+
+      if (error) throw error;
+
+      if (data) {
+        setIsEditMode(true);
+        setFormData(data.form_data || {});
+        setExistingPhotoUrl(data.photo_url);
+        setPhotoPreview(data.photo_url);
+        setExistingDocumentUrls(data.form_data?.documentUrls || []);
+      }
+    } catch (err: any) {
+      setError('Failed to load submission: ' + err.message);
+    }
+  };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target;
@@ -69,66 +102,94 @@ export default function InventoryForm() {
     setError('');
     setLoading(true);
 
-    if (!photoFile) {
+    // In edit mode, photo is optional if already exists
+    if (!isEditMode && !photoFile) {
       setError('Please upload a photo');
       setLoading(false);
       return;
     }
 
-    if (documentFiles.length !== 4) {
+    // In edit mode, documents are optional if already exist
+    if (!isEditMode && documentFiles.length !== 4) {
       setError('Please upload all 4 required documents');
       setLoading(false);
       return;
     }
 
     try {
-      // Upload student photo
-      const fileExt = photoFile.name.split('.').pop();
-      const fileName = `${user?.id}_${Date.now()}.${fileExt}`;
-      const { error: uploadError } = await supabase.storage
-        .from('student-photos')
-        .upload(fileName, photoFile);
+      let photoUrl = existingPhotoUrl;
+      let uploadedDocUrls = existingDocumentUrls;
 
-      if (uploadError) throw uploadError;
-
-      const { data: { publicUrl } } = supabase.storage
-        .from('student-photos')
-        .getPublicUrl(fileName);
-
-      // Upload document files
-      const uploadedDocUrls: string[] = [];
-      for (let i = 0; i < documentFiles.length; i++) {
-        const docFile = documentFiles[i];
-        const docExt = docFile.name.split('.').pop();
-        const docFileName = `${user?.id}_doc${i + 1}_${Date.now()}.${docExt}`;
-        
-        const { error: docUploadError } = await supabase.storage
+      // Upload new photo if provided
+      if (photoFile) {
+        const fileExt = photoFile.name.split('.').pop();
+        const fileName = `${user?.id}_${Date.now()}.${fileExt}`;
+        const { error: uploadError } = await supabase.storage
           .from('student-photos')
-          .upload(docFileName, docFile);
+          .upload(fileName, photoFile);
 
-        if (docUploadError) throw docUploadError;
+        if (uploadError) throw uploadError;
 
-        const { data: { publicUrl: docUrl } } = supabase.storage
+        const { data: { publicUrl } } = supabase.storage
           .from('student-photos')
-          .getPublicUrl(docFileName);
+          .getPublicUrl(fileName);
 
-        uploadedDocUrls.push(docUrl);
+        photoUrl = publicUrl;
       }
 
-      // Save to database with document URLs
-      const { error: dbError } = await supabase.from('inventory_submissions').insert({
+      // Upload new documents if provided
+      if (documentFiles.length > 0) {
+        uploadedDocUrls = [];
+        for (let i = 0; i < documentFiles.length; i++) {
+          const docFile = documentFiles[i];
+          const docExt = docFile.name.split('.').pop();
+          const docFileName = `${user?.id}_doc${i + 1}_${Date.now()}.${docExt}`;
+          
+          const { error: docUploadError } = await supabase.storage
+            .from('student-photos')
+            .upload(docFileName, docFile);
+
+          if (docUploadError) throw docUploadError;
+
+          const { data: { publicUrl: docUrl } } = supabase.storage
+            .from('student-photos')
+            .getPublicUrl(docFileName);
+
+          uploadedDocUrls.push(docUrl);
+        }
+      }
+
+      const submissionData = {
         user_id: user?.id,
         student_id: formData.idNo,
         full_name: `${formData.firstName} ${formData.middleInitial} ${formData.lastName}`,
         course: formData.programYear,
         year_level: formData.programYear.split(' ')[0] || '',
         contact_number: formData.mobilePhone,
-        photo_url: publicUrl,
+        photo_url: photoUrl,
         form_data: { ...formData, documentUrls: uploadedDocUrls },
         google_form_response_id: '',
-      });
+      };
 
-      if (dbError) throw dbError;
+      if (isEditMode && editId) {
+        // Update existing submission
+        const { error: dbError } = await supabase
+          .from('inventory_submissions')
+          .update(submissionData)
+          .eq('id', editId);
+
+        if (dbError) throw dbError;
+        alert('✅ Submission updated successfully!');
+      } else {
+        // Create new submission
+        const { error: dbError } = await supabase
+          .from('inventory_submissions')
+          .insert(submissionData);
+
+        if (dbError) throw dbError;
+        alert('✅ Form submitted successfully!');
+      }
+
       navigate('/dashboard');
     } catch (err: any) {
       setError(err.message || 'Failed to submit form');
@@ -138,36 +199,93 @@ export default function InventoryForm() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 py-8">
       <div className="max-w-5xl mx-auto px-4">
-        <div className="bg-white rounded-lg shadow-lg p-8">
-          <div className="mb-8 text-center">
-            <div className="flex items-center justify-center gap-4 mb-4">
-              <div className="w-16 h-16 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold text-2xl">
-                NBSC
+        {/* Header Card */}
+        <div className="bg-white rounded-2xl shadow-xl mb-6 overflow-hidden">
+          <div className="bg-gradient-to-r from-blue-600 to-indigo-600 px-8 py-6">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="w-16 h-16 bg-white rounded-xl flex items-center justify-center shadow-lg">
+                  <span className="text-2xl font-bold text-blue-600">NBSC</span>
+                </div>
+                <div className="text-white">
+                  <h1 className="text-2xl font-bold">NORTHERN BUKIDNON STATE COLLEGE</h1>
+                  <p className="text-sm text-blue-100">GUIDANCE AND COUNSELING OFFICE</p>
+                </div>
               </div>
-              <div>
-                <h1 className="text-2xl font-bold text-gray-800">NORTHERN BUKIDNON STATE COLLEGE</h1>
-                <p className="text-sm text-gray-600">GUIDANCE AND COUNSELING OFFICE</p>
-              </div>
+              <button
+                onClick={() => navigate('/dashboard')}
+                className="px-4 py-2 bg-white/20 hover:bg-white/30 text-white rounded-lg transition backdrop-blur-sm border border-white/30"
+              >
+                ← Back
+              </button>
             </div>
-            <h2 className="text-xl font-bold text-gray-800">Individual Inventory Form</h2>
           </div>
+          
+          <div className="px-8 py-6 bg-gradient-to-r from-gray-50 to-white">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-2xl font-bold text-gray-800 mb-1">
+                  {isEditMode ? '✏️ Edit Inventory Form' : '📝 Individual Inventory Form'}
+                </h2>
+                <p className="text-sm text-gray-600">
+                  {isEditMode ? 'Update your information below' : 'Please fill out all required fields accurately'}
+                </p>
+              </div>
+              {isEditMode && (
+                <div className="px-4 py-2 bg-amber-100 border border-amber-300 rounded-lg">
+                  <p className="text-sm font-medium text-amber-800">Edit Mode</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
 
+        {/* Main Form Card */}
+        <div className="bg-white rounded-2xl shadow-xl p-8">
           {/* Progress Indicator */}
-          <div className="flex justify-center mb-8">
-            <div className="flex gap-2">
-              {[1, 2, 3].map((section) => (
+          <div className="mb-8">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-gray-700">Progress</h3>
+              <span className="text-sm text-gray-500">Section {currentSection} of 3</span>
+            </div>
+            <div className="flex gap-3">
+              {[
+                { num: 1, label: 'Basic Info' },
+                { num: 2, label: 'Family' },
+                { num: 3, label: 'Health & Interests' }
+              ].map((section) => (
                 <button
-                  key={section}
-                  onClick={() => setCurrentSection(section)}
-                  className={`px-4 py-2 rounded-lg font-medium transition ${
-                    currentSection === section
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                  key={section.num}
+                  type="button"
+                  onClick={() => setCurrentSection(section.num)}
+                  className={`flex-1 group relative overflow-hidden rounded-xl transition-all duration-300 ${
+                    currentSection === section.num
+                      ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg scale-105'
+                      : currentSection > section.num
+                      ? 'bg-green-100 text-green-700 hover:bg-green-200'
+                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                   }`}
                 >
-                  Section {section}
+                  <div className="px-4 py-3 flex items-center justify-center gap-2">
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${
+                      currentSection === section.num
+                        ? 'bg-white/20'
+                        : currentSection > section.num
+                        ? 'bg-green-200'
+                        : 'bg-gray-200'
+                    }`}>
+                      {currentSection > section.num ? (
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                        </svg>
+                      ) : (
+                        section.num
+                      )}
+                    </div>
+                    <span className="font-semibold text-sm">{section.label}</span>
+                  </div>
                 </button>
               ))}
             </div>
@@ -178,18 +296,38 @@ export default function InventoryForm() {
             {/* Section 1: Basic Information */}
             {currentSection === 1 && (
               <div className="space-y-6">
-                <h3 className="text-lg font-bold text-gray-800 border-b pb-2">Basic Information</h3>
+                <div className="flex items-center gap-3 pb-4 border-b-2 border-blue-100">
+                  <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-lg flex items-center justify-center text-white shadow-lg">
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-bold text-gray-800">Basic Information</h3>
+                    <p className="text-sm text-gray-500">Personal details and contact information</p>
+                  </div>
+                </div>
                 
                 {/* Photo Upload */}
                 <div className="border-2 border-dashed border-gray-300 rounded-lg p-6">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Student Photo (2x2)</label>
-                  <input type="file" accept="image/*" onChange={handlePhotoChange} className="block w-full text-sm" required />
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Student Photo (2x2) {isEditMode && '(Optional - leave empty to keep current photo)'}
+                  </label>
+                  <input 
+                    type="file" 
+                    accept="image/*" 
+                    onChange={handlePhotoChange} 
+                    className="block w-full text-sm" 
+                    required={!isEditMode} 
+                  />
                   {photoPreview && <img src={photoPreview} alt="Preview" className="mt-4 w-32 h-32 object-cover rounded-lg" />}
                 </div>
 
                 {/* Document Scanner */}
                 <div className="border-2 border-blue-200 rounded-lg p-6 bg-blue-50">
-                  <h4 className="text-md font-bold text-gray-800 mb-4">📄 Required Documents (4)</h4>
+                  <h4 className="text-md font-bold text-gray-800 mb-4">
+                    📄 Required Documents (4) {isEditMode && '(Optional - leave empty to keep current documents)'}
+                  </h4>
                   <p className="text-sm text-gray-600 mb-4">
                     Please scan or photograph these 4 documents:
                   </p>
@@ -267,7 +405,14 @@ export default function InventoryForm() {
                   </div>
                 </div>
 
-                <h4 className="text-md font-bold text-gray-800 mt-6">Contact Information</h4>
+                <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-4 mt-6">
+                  <h4 className="text-md font-bold text-gray-800 flex items-center gap-2">
+                    <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                    </svg>
+                    Contact Information
+                  </h4>
+                </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Mobile Phone</label>
@@ -299,9 +444,26 @@ export default function InventoryForm() {
             {/* Section 2: Family Background */}
             {currentSection === 2 && (
               <div className="space-y-6">
-                <h3 className="text-lg font-bold text-gray-800 border-b pb-2">Family Background</h3>
+                <div className="flex items-center gap-3 pb-4 border-b-2 border-purple-100">
+                  <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-lg flex items-center justify-center text-white shadow-lg">
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-bold text-gray-800">Family Background</h3>
+                    <p className="text-sm text-gray-500">Information about your family members</p>
+                  </div>
+                </div>
                 
-                <h4 className="text-md font-bold text-gray-800">Mother's Profile</h4>
+                <div className="bg-gradient-to-r from-pink-50 to-purple-50 rounded-xl p-4 mt-6">
+                  <h4 className="text-md font-bold text-gray-800 flex items-center gap-2">
+                    <svg className="w-5 h-5 text-pink-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                    </svg>
+                    Mother's Profile
+                  </h4>
+                </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
@@ -337,7 +499,14 @@ export default function InventoryForm() {
                   </div>
                 </div>
 
-                <h4 className="text-md font-bold text-gray-800 mt-6">Father's Profile</h4>
+                <div className="bg-gradient-to-r from-blue-50 to-cyan-50 rounded-xl p-4 mt-6">
+                  <h4 className="text-md font-bold text-gray-800 flex items-center gap-2">
+                    <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    </svg>
+                    Father's Profile
+                  </h4>
+                </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
@@ -373,7 +542,14 @@ export default function InventoryForm() {
                   </div>
                 </div>
 
-                <h4 className="text-md font-bold text-gray-800 mt-6">Parents Status</h4>
+                <div className="bg-gradient-to-r from-purple-50 to-indigo-50 rounded-xl p-4 mt-6">
+                  <h4 className="text-md font-bold text-gray-800 flex items-center gap-2">
+                    <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                    </svg>
+                    Parents Status
+                  </h4>
+                </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Status of Parents</label>
@@ -407,7 +583,17 @@ export default function InventoryForm() {
             {/* Section 3: Interests, Health & Life Circumstances */}
             {currentSection === 3 && (
               <div className="space-y-6">
-                <h3 className="text-lg font-bold text-gray-800 border-b pb-2">Interests & Recreational Activities</h3>
+                <div className="flex items-center gap-3 pb-4 border-b-2 border-green-100">
+                  <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-emerald-500 rounded-lg flex items-center justify-center text-white shadow-lg">
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-bold text-gray-800">Interests, Health & Life Circumstances</h3>
+                    <p className="text-sm text-gray-500">Your hobbies, health status, and current concerns</p>
+                  </div>
+                </div>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
@@ -433,7 +619,14 @@ export default function InventoryForm() {
                   <input type="text" name="schoolOrg" value={formData.schoolOrg} onChange={handleChange} className="w-full px-4 py-2 border rounded-lg" />
                 </div>
 
-                <h3 className="text-lg font-bold text-gray-800 border-b pb-2 mt-8">Health</h3>
+                <div className="bg-gradient-to-r from-red-50 to-pink-50 rounded-xl p-4 mt-8">
+                  <h3 className="text-lg font-bold text-gray-800 flex items-center gap-2">
+                    <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                    </svg>
+                    Health Information
+                  </h3>
+                </div>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
@@ -486,7 +679,14 @@ export default function InventoryForm() {
                   </div>
                 </div>
 
-                <h3 className="text-lg font-bold text-gray-800 border-b pb-2 mt-8">Life Circumstances</h3>
+                <div className="bg-gradient-to-r from-amber-50 to-orange-50 rounded-xl p-4 mt-8">
+                  <h3 className="text-lg font-bold text-gray-800 flex items-center gap-2">
+                    <svg className="w-6 h-6 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    Life Circumstances
+                  </h3>
+                </div>
                 <p className="text-sm text-gray-600 mb-4">Check any of the PROBLEMS below that currently concerns you:</p>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -515,16 +715,27 @@ export default function InventoryForm() {
             )}
 
             {error && (
-              <div className="bg-red-50 text-red-600 p-4 rounded-lg">{error}</div>
+              <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded-lg flex items-start gap-3">
+                <svg className="w-6 h-6 text-red-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <div>
+                  <p className="font-medium text-red-800">Error</p>
+                  <p className="text-sm text-red-700">{error}</p>
+                </div>
+              </div>
             )}
 
-            <div className="flex gap-4 pt-6 border-t">
+            <div className="flex gap-4 pt-8 mt-8 border-t-2 border-gray-200">
               {currentSection > 1 && (
                 <button
                   type="button"
                   onClick={() => setCurrentSection(currentSection - 1)}
-                  className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50"
+                  className="flex items-center gap-2 px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-xl font-medium hover:bg-gray-50 hover:border-gray-400 transition-all shadow-sm"
                 >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                  </svg>
                   Previous
                 </button>
               )}
@@ -533,24 +744,42 @@ export default function InventoryForm() {
                 <button
                   type="button"
                   onClick={() => setCurrentSection(currentSection + 1)}
-                  className="flex-1 px-6 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700"
+                  className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl font-medium hover:from-blue-700 hover:to-indigo-700 transition-all shadow-lg hover:shadow-xl"
                 >
                   Next Section
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
                 </button>
               ) : (
                 <button
                   type="submit"
                   disabled={loading}
-                  className="flex-1 px-6 py-3 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 disabled:opacity-50"
+                  className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-xl font-medium hover:from-green-700 hover:to-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg hover:shadow-xl"
                 >
-                  {loading ? 'Submitting...' : 'Submit Form'}
+                  {loading ? (
+                    <>
+                      <svg className="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      {isEditMode ? 'Updating...' : 'Submitting...'}
+                    </>
+                  ) : (
+                    <>
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      {isEditMode ? 'Update Form' : 'Submit Form'}
+                    </>
+                  )}
                 </button>
               )}
               
               <button
                 type="button"
                 onClick={() => navigate('/dashboard')}
-                className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50"
+                className="px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-xl font-medium hover:bg-gray-50 hover:border-gray-400 transition-all shadow-sm"
               >
                 Cancel
               </button>

@@ -79,25 +79,6 @@ export default function Login() {
           <p className="text-gray-600 mt-2">Sign in to your account</p>
         </div>
 
-        <div className="flex gap-2 mb-6">
-          <button
-            onClick={() => setIsAdminLogin(false)}
-            className={`flex-1 py-2 rounded-lg font-medium transition ${
-              !isAdminLogin ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700'
-            }`}
-          >
-            Student
-          </button>
-          <button
-            onClick={() => setIsAdminLogin(true)}
-            className={`flex-1 py-2 rounded-lg font-medium transition ${
-              isAdminLogin ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700'
-            }`}
-          >
-            Admin
-          </button>
-        </div>
-
         <form onSubmit={handleLogin} className="space-y-4">
           {!isAdminLogin ? (
             <>
@@ -166,6 +147,30 @@ export default function Login() {
               </p>
             </div>
           </>
+        )}
+
+        {/* Admin Access Button */}
+        {!isAdminLogin && (
+          <div className="mt-6 pt-6 border-t border-gray-200">
+            <button
+              onClick={() => setIsAdminLogin(true)}
+              className="w-full py-2 px-4 text-xs text-gray-600 hover:text-gray-800 hover:bg-gray-50 rounded-lg transition border border-gray-300"
+            >
+              🔒 Admin Access
+            </button>
+          </div>
+        )}
+
+        {/* Back to Student Login */}
+        {isAdminLogin && (
+          <div className="mt-6 pt-6 border-t border-gray-200">
+            <button
+              onClick={() => setIsAdminLogin(false)}
+              className="w-full py-2 px-4 text-xs text-gray-600 hover:text-gray-800 hover:bg-gray-50 rounded-lg transition"
+            >
+              ← Back to Student Login
+            </button>
+          </div>
         )}
       </div>
     </div>
