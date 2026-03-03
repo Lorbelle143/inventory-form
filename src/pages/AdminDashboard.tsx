@@ -30,7 +30,16 @@ export default function AdminDashboard() {
       .from('inventory_submissions')
       .select('*');
 
-    setStudents(studentsData || []);
+    // Merge student profiles with their submission photos
+    const studentsWithPhotos = (studentsData || []).map(student => {
+      const submission = (submissionsData || []).find(s => s.student_id === student.student_id);
+      return {
+        ...student,
+        photo_url: submission?.photo_url || null
+      };
+    });
+
+    setStudents(studentsWithPhotos);
     setSubmissions(submissionsData || []);
     setStats({
       totalStudents: studentsData?.length || 0,
@@ -507,10 +516,20 @@ export default function AdminDashboard() {
                 {sortedStudents.map((student) => (
                   <div key={student.id} className="group bg-gradient-to-br from-white to-gray-50 border-2 border-gray-200 rounded-2xl shadow-md hover:shadow-2xl transition-all duration-300 overflow-hidden transform hover:-translate-y-1">
                     <div className="aspect-square bg-gradient-to-br from-blue-100 to-indigo-200 flex items-center justify-center relative overflow-hidden">
-                      <div className="absolute inset-0 bg-gradient-to-br from-blue-400/20 to-purple-400/20"></div>
-                      <svg className="w-28 h-28 text-blue-600 relative z-10" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
-                      </svg>
+                      {student.photo_url ? (
+                        <img 
+                          src={student.photo_url} 
+                          alt={student.full_name}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <>
+                          <div className="absolute inset-0 bg-gradient-to-br from-blue-400/20 to-purple-400/20"></div>
+                          <svg className="w-28 h-28 text-blue-600 relative z-10" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
+                          </svg>
+                        </>
+                      )}
                     </div>
                     <div className="p-5">
                       <h3 className="font-bold text-gray-800 text-lg mb-2 truncate">{student.full_name}</h3>

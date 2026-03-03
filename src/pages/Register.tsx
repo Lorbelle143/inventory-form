@@ -12,15 +12,32 @@ export default function Register() {
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [emailError, setEmailError] = useState('');
   const navigate = useNavigate();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setFormData({ ...formData, [name]: value });
+
+    // Real-time email validation
+    if (name === 'email') {
+      if (value && !value.endsWith('@nbsc.edu.ph')) {
+        setEmailError('Must be a valid NBSC email (@nbsc.edu.ph)');
+      } else {
+        setEmailError('');
+      }
+    }
   };
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+
+    // Validate NBSC email domain
+    if (!formData.email.endsWith('@nbsc.edu.ph')) {
+      setError('Only NBSC student emails are allowed (e.g., 20201362@nbsc.edu.ph)');
+      return;
+    }
 
     if (formData.password !== formData.confirmPassword) {
       setError('Passwords do not match');
@@ -94,8 +111,13 @@ export default function Register() {
       console.log('✅ Profile created:', insertedProfile);
       console.log('=== REGISTRATION SUCCESS ===');
 
-      // Success!
-      alert('✅ Registration successful!\n\nYou can now login with:\n• Student ID: ' + formData.studentId + '\n• Password: (your password)');
+      // Success! Show email confirmation message
+      alert(
+        '✅ Registration successful!\n\n' +
+        '📧 Please check your email (' + formData.email + ') to confirm your account.\n\n' +
+        '⚠️ You must verify your email before you can login.\n\n' +
+        'Check your spam folder if you don\'t see the email within a few minutes.'
+      );
       navigate('/login');
     } catch (err: any) {
       console.error('❌ Unexpected error:', err);
@@ -140,15 +162,32 @@ export default function Register() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              NBSC Student Email
+            </label>
             <input
               type="email"
               name="email"
               value={formData.email}
               onChange={handleChange}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              placeholder="20201362@nbsc.edu.ph"
+              className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                emailError ? 'border-red-500' : 'border-gray-300'
+              }`}
               required
             />
+            {emailError ? (
+              <p className="text-xs text-red-600 mt-1 flex items-center gap-1">
+                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                </svg>
+                {emailError}
+              </p>
+            ) : (
+              <p className="text-xs text-gray-500 mt-1">
+                Must be a valid NBSC email ending with @nbsc.edu.ph
+              </p>
+            )}
           </div>
 
           <div>
@@ -188,9 +227,9 @@ export default function Register() {
           </button>
         </form>
 
-        <div className="mt-4 p-3 bg-yellow-50 rounded-lg border border-yellow-200">
-          <p className="text-xs text-yellow-800 text-center">
-            ⚠️ If you see "email rate limit exceeded", wait 1 hour or disable email confirmation in Supabase Dashboard → Authentication → Providers → Email
+        <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+          <p className="text-xs text-blue-800 text-center">
+            📧 After registration, you'll receive a confirmation email. Please verify your email before logging in.
           </p>
         </div>
 

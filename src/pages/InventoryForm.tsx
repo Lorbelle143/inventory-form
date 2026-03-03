@@ -3,9 +3,10 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import { supabase } from '../lib/supabase';
 import DocumentScanner from '../components/DocumentScanner';
+import { useSessionTimeout } from '../hooks/useSessionTimeout';
 
 export default function InventoryForm() {
-  const { user } = useAuthStore();
+  const { user, checkAuth } = useAuthStore();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const editId = searchParams.get('edit');
@@ -36,11 +37,26 @@ export default function InventoryForm() {
   const [photoPreview, setPhotoPreview] = useState<string>('');
   const [documentFiles, setDocumentFiles] = useState<File[]>([]);
 
+  // Enable session timeout protection
+  useSessionTimeout();
+
   useEffect(() => {
-    if (editId) {
+    // Verify authentication on component mount
+    const verifyAuth = async () => {
+      await checkAuth();
+      if (!user) {
+        navigate('/login');
+        return;
+      }
+    };
+    verifyAuth();
+  }, []);
+
+  useEffect(() => {
+    if (editId && user) {
       loadExistingSubmission(editId);
     }
-  }, [editId]);
+  }, [editId, user]);
 
   const loadExistingSubmission = async (id: string) => {
     try {

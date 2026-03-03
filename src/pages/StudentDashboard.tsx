@@ -2,18 +2,36 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import { supabase } from '../lib/supabase';
+import { useSessionTimeout } from '../hooks/useSessionTimeout';
 
 export default function StudentDashboard() {
-  const { user, signOut } = useAuthStore();
+  const { user, signOut, checkAuth } = useAuthStore();
   const [profile, setProfile] = useState<any>(null);
   const [submissions, setSubmissions] = useState<any[]>([]);
   const [showViewModal, setShowViewModal] = useState(false);
   const [selectedSubmission, setSelectedSubmission] = useState<any>(null);
   const navigate = useNavigate();
 
+  // Enable session timeout protection
+  useSessionTimeout();
+
   useEffect(() => {
-    loadProfile();
-    loadSubmissions();
+    // Verify authentication on component mount
+    const verifyAuth = async () => {
+      await checkAuth();
+      if (!user) {
+        navigate('/login');
+        return;
+      }
+    };
+    verifyAuth();
+  }, []);
+
+  useEffect(() => {
+    if (user) {
+      loadProfile();
+      loadSubmissions();
+    }
   }, [user]);
 
   const loadProfile = async () => {

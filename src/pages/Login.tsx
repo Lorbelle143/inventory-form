@@ -54,12 +54,25 @@ export default function Login() {
       });
 
       if (signInError) {
-        setError('Invalid password. Please try again.');
+        // Check if error is due to unconfirmed email
+        if (signInError.message.includes('Email not confirmed') || signInError.message.includes('email_not_confirmed')) {
+          setError('⚠️ Please verify your email first. Check your inbox for the confirmation link.');
+        } else {
+          setError('Invalid password. Please try again.');
+        }
         setLoading(false);
         return;
       }
 
       if (data.user) {
+        // Double-check email is confirmed
+        if (!data.user.email_confirmed_at) {
+          setError('⚠️ Please verify your email first. Check your inbox for the confirmation link.');
+          await supabase.auth.signOut(); // Sign out the unconfirmed user
+          setLoading(false);
+          return;
+        }
+
         setUser(data.user);
         setIsAdmin(false);
         navigate('/dashboard');
