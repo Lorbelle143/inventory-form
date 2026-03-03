@@ -10,6 +10,7 @@ export default function InventoryForm() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const editId = searchParams.get('edit');
+  const isAdminMode = searchParams.get('admin') === 'true'; // Check if admin is creating
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [currentSection, setCurrentSection] = useState(1);
@@ -37,10 +38,13 @@ export default function InventoryForm() {
   const [photoPreview, setPhotoPreview] = useState<string>('');
   const [documentFiles, setDocumentFiles] = useState<File[]>([]);
 
-  // Enable session timeout protection
+  // Enable session timeout protection (always call hook, but it checks isAdminMode internally)
   useSessionTimeout();
 
   useEffect(() => {
+    // Skip auth check if admin is creating
+    if (isAdminMode) return;
+    
     // Verify authentication on component mount
     const verifyAuth = async () => {
       await checkAuth();
@@ -50,13 +54,13 @@ export default function InventoryForm() {
       }
     };
     verifyAuth();
-  }, []);
+  }, [isAdminMode]);
 
   useEffect(() => {
-    if (editId && user) {
+    if (editId && (user || isAdminMode)) {
       loadExistingSubmission(editId);
     }
-  }, [editId, user]);
+  }, [editId, user, isAdminMode]);
 
   const loadExistingSubmission = async (id: string) => {
     try {
@@ -70,10 +74,72 @@ export default function InventoryForm() {
 
       if (data) {
         setIsEditMode(true);
-        setFormData(data.form_data || {});
+        
+        // Merge existing data with default form structure to ensure all fields exist
+        const loadedFormData = data.form_data || {};
+        setFormData({
+          lastName: loadedFormData.lastName || '',
+          firstName: loadedFormData.firstName || '',
+          middleInitial: loadedFormData.middleInitial || '',
+          programYear: loadedFormData.programYear || '',
+          birthDate: loadedFormData.birthDate || '',
+          idNo: loadedFormData.idNo || '',
+          gender: loadedFormData.gender || '',
+          ethnicity: loadedFormData.ethnicity || '',
+          religion: loadedFormData.religion || '',
+          civilStatus: loadedFormData.civilStatus || '',
+          mobilePhone: loadedFormData.mobilePhone || '',
+          personalEmail: loadedFormData.personalEmail || '',
+          institutionalEmail: loadedFormData.institutionalEmail || '',
+          permanentAddress: loadedFormData.permanentAddress || '',
+          currentAddress: loadedFormData.currentAddress || '',
+          spouseAge: loadedFormData.spouseAge || '',
+          spouseName: loadedFormData.spouseName || '',
+          spouseOccupation: loadedFormData.spouseOccupation || '',
+          spouseContactNumber: loadedFormData.spouseContactNumber || '',
+          isWorking: loadedFormData.isWorking || false,
+          workingStatus: loadedFormData.workingStatus || '',
+          occupation: loadedFormData.occupation || '',
+          motherName: loadedFormData.motherName || '',
+          motherAge: loadedFormData.motherAge || '',
+          motherEthnicity: loadedFormData.motherEthnicity || '',
+          motherEducation: loadedFormData.motherEducation || '',
+          motherOccupation: loadedFormData.motherOccupation || '',
+          motherCompany: loadedFormData.motherCompany || '',
+          motherIncome: loadedFormData.motherIncome || '',
+          motherContact: loadedFormData.motherContact || '',
+          fatherName: loadedFormData.fatherName || '',
+          fatherAge: loadedFormData.fatherAge || '',
+          fatherEthnicity: loadedFormData.fatherEthnicity || '',
+          fatherEducation: loadedFormData.fatherEducation || '',
+          fatherOccupation: loadedFormData.fatherOccupation || '',
+          fatherCompany: loadedFormData.fatherCompany || '',
+          fatherIncome: loadedFormData.fatherIncome || '',
+          fatherContact: loadedFormData.fatherContact || '',
+          parentsStatus: loadedFormData.parentsStatus || '',
+          numberOfSiblings: loadedFormData.numberOfSiblings || '',
+          guardianName: loadedFormData.guardianName || '',
+          guardianAddress: loadedFormData.guardianAddress || '',
+          hobbies: loadedFormData.hobbies || '',
+          talents: loadedFormData.talents || '',
+          sports: loadedFormData.sports || '',
+          socioCivic: loadedFormData.socioCivic || '',
+          schoolOrg: loadedFormData.schoolOrg || '',
+          hospitalized: loadedFormData.hospitalized || '',
+          hospitalizationReason: loadedFormData.hospitalizationReason || '',
+          surgery: loadedFormData.surgery || '',
+          surgeryReason: loadedFormData.surgeryReason || '',
+          chronicIllness: loadedFormData.chronicIllness || '',
+          familyIllness: loadedFormData.familyIllness || '',
+          lastDoctorVisit: loadedFormData.lastDoctorVisit || '',
+          visitReason: loadedFormData.visitReason || '',
+          lifeCircumstances: loadedFormData.lifeCircumstances || [],
+          counselorRemarks: loadedFormData.counselorRemarks || '',
+        });
+        
         setExistingPhotoUrl(data.photo_url);
         setPhotoPreview(data.photo_url);
-        setExistingDocumentUrls(data.form_data?.documentUrls || []);
+        setExistingDocumentUrls(loadedFormData.documentUrls || []);
       }
     } catch (err: any) {
       setError('Failed to load submission: ' + err.message);
@@ -136,10 +202,13 @@ export default function InventoryForm() {
       let photoUrl = existingPhotoUrl;
       let uploadedDocUrls = existingDocumentUrls;
 
+      // Generate user ID for admin mode
+      const userId = isAdminMode ? '00000000-0000-0000-0000-000000000000' : user?.id;
+
       // Upload new photo if provided
       if (photoFile) {
         const fileExt = photoFile.name.split('.').pop();
-        const fileName = `${user?.id}_${Date.now()}.${fileExt}`;
+        const fileName = `${userId}_${Date.now()}.${fileExt}`;
         const { error: uploadError } = await supabase.storage
           .from('student-photos')
           .upload(fileName, photoFile);
@@ -159,7 +228,7 @@ export default function InventoryForm() {
         for (let i = 0; i < documentFiles.length; i++) {
           const docFile = documentFiles[i];
           const docExt = docFile.name.split('.').pop();
-          const docFileName = `${user?.id}_doc${i + 1}_${Date.now()}.${docExt}`;
+          const docFileName = `${userId}_doc${i + 1}_${Date.now()}.${docExt}`;
           
           const { error: docUploadError } = await supabase.storage
             .from('student-photos')
@@ -176,7 +245,7 @@ export default function InventoryForm() {
       }
 
       const submissionData = {
-        user_id: user?.id,
+        user_id: userId,
         student_id: formData.idNo,
         full_name: `${formData.firstName} ${formData.middleInitial} ${formData.lastName}`,
         course: formData.programYear,
@@ -206,7 +275,12 @@ export default function InventoryForm() {
         alert('✅ Form submitted successfully!');
       }
 
-      navigate('/dashboard');
+      // Navigate back based on mode
+      if (isAdminMode) {
+        navigate('/admin');
+      } else {
+        navigate('/dashboard');
+      }
     } catch (err: any) {
       setError(err.message || 'Failed to submit form');
     } finally {
@@ -226,12 +300,14 @@ export default function InventoryForm() {
                   <span className="text-2xl font-bold text-blue-600">NBSC</span>
                 </div>
                 <div className="text-white">
-                  <h1 className="text-2xl font-bold">NORTHERN BUKIDNON STATE COLLEGE</h1>
+                  <h1 className="text-2xl font-bold">
+                    {isAdminMode ? 'ADMIN - ADD NEW STUDENT' : 'NORTHERN BUKIDNON STATE COLLEGE'}
+                  </h1>
                   <p className="text-sm text-blue-100">GUIDANCE AND COUNSELING OFFICE</p>
                 </div>
               </div>
               <button
-                onClick={() => navigate('/dashboard')}
+                onClick={() => navigate(isAdminMode ? '/admin' : '/dashboard')}
                 className="px-4 py-2 bg-white/20 hover:bg-white/30 text-white rounded-lg transition backdrop-blur-sm border border-white/30"
               >
                 ← Back

@@ -25,10 +25,14 @@ export default function DocumentScanner({ onDocumentsChange, maxDocuments = 4 }:
       return;
     }
 
-    // Validate file sizes
-    const oversizedFiles = filesToAdd.filter(f => f.size > 5 * 1024 * 1024);
+    // Validate file sizes (10MB for PDFs, 5MB for images)
+    const oversizedFiles = filesToAdd.filter(f => {
+      const maxSize = f.type === 'application/pdf' ? 10 * 1024 * 1024 : 5 * 1024 * 1024;
+      return f.size > maxSize;
+    });
+    
     if (oversizedFiles.length > 0) {
-      alert('Some files are too large. Maximum 5MB per file.');
+      alert('Some files are too large. Maximum 5MB for images, 10MB for PDFs.');
       return;
     }
 
@@ -38,11 +42,17 @@ export default function DocumentScanner({ onDocumentsChange, maxDocuments = 4 }:
 
     // Create previews
     filesToAdd.forEach(file => {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setPreviews(prev => [...prev, reader.result as string]);
-      };
-      reader.readAsDataURL(file);
+      if (file.type === 'application/pdf') {
+        // For PDFs, show a PDF icon instead of preview
+        setPreviews(prev => [...prev, 'PDF']);
+      } else {
+        // For images, create preview
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setPreviews(prev => [...prev, reader.result as string]);
+        };
+        reader.readAsDataURL(file);
+      }
     });
   };
 
@@ -116,26 +126,38 @@ export default function DocumentScanner({ onDocumentsChange, maxDocuments = 4 }:
 
       {/* Document previews */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {previews.map((preview, index) => (
+        {documents.map((doc, index) => (
           <div key={index} className="relative group">
             <div className="aspect-square bg-gray-100 rounded-lg overflow-hidden border-2 border-gray-300">
-              <img
-                src={preview}
-                alt={`Document ${index + 1}`}
-                className="w-full h-full object-cover"
-              />
+              {doc.type === 'application/pdf' ? (
+                // PDF Preview
+                <div className="w-full h-full flex flex-col items-center justify-center bg-red-50">
+                  <svg className="w-16 h-16 text-red-600 mb-2" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clipRule="evenodd" />
+                  </svg>
+                  <p className="text-xs font-bold text-red-600">PDF</p>
+                  <p className="text-xs text-gray-600 px-2 text-center truncate w-full">{doc.name}</p>
+                </div>
+              ) : (
+                // Image Preview
+                <img
+                  src={previews[index]}
+                  alt={`Document ${index + 1}`}
+                  className="w-full h-full object-cover"
+                />
+              )}
             </div>
             <button
               type="button"
               onClick={() => removeDocument(index)}
-              className="absolute top-2 right-2 bg-red-600 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition"
+              className="absolute top-2 right-2 bg-red-600 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition shadow-lg"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
-            <p className="text-xs text-center text-gray-600 mt-1">
-              Doc {index + 1}
+            <p className="text-xs text-center text-gray-600 mt-1 font-medium">
+              {doc.type === 'application/pdf' ? '📄 PDF' : '📷 Image'} {index + 1}
             </p>
           </div>
         ))}
@@ -162,9 +184,10 @@ export default function DocumentScanner({ onDocumentsChange, maxDocuments = 4 }:
         </p>
         <ul className="text-xs text-blue-700 mt-1 space-y-1">
           <li>• Use "Scan/Camera" to take photos directly</li>
-          <li>• Use "Upload Files" to select from gallery</li>
-          <li>• Maximum {maxDocuments} documents (5MB each)</li>
-          <li>• Supported: JPG, PNG, PDF</li>
+          <li>• Use "Upload Files" to select images or PDFs</li>
+          <li>• Maximum {maxDocuments} documents</li>
+          <li>• Images: 5MB max (JPG, PNG)</li>
+          <li>• PDFs: 10MB max</li>
         </ul>
       </div>
     </div>

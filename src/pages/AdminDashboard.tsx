@@ -59,15 +59,13 @@ export default function AdminDashboard() {
   };
 
   const handleCreate = () => {
-    setSelectedSubmission(null);
-    setModalMode('create');
-    setShowModal(true);
+    // Open inventory form in admin mode
+    navigate('/inventory-form?admin=true');
   };
 
   const handleEdit = (submission: any) => {
-    setSelectedSubmission(submission);
-    setModalMode('edit');
-    setShowModal(true);
+    // Redirect to inventory form with edit ID and admin mode
+    navigate(`/inventory-form?edit=${submission.id}&admin=true`);
   };
 
   const handleDeleteStudent = async (id: string, studentName: string, studentId: string) => {
@@ -273,7 +271,7 @@ export default function AdminDashboard() {
   };
 
   const exportToCSV = () => {
-    const headers = ['Student ID', 'Last Name', 'First Name', 'Course', 'Year Level', 'Contact', 'Submitted Date'];
+    const headers = ['Student ID', 'Last Name', 'First Name', 'Course', 'Year Level', 'Contact Number', 'Submitted Date & Time'];
     
     // Sort submissions by last name A-Z before exporting
     const sortedForExport = [...filteredAndSortedSubmissions].sort((a, b) => {
@@ -284,14 +282,27 @@ export default function AdminDashboard() {
     
     const rows = sortedForExport.map(s => {
       const formData = s.form_data || {};
+      const submittedDate = new Date(s.created_at);
+      
+      // Format: MM/DD/YYYY HH:MM:SS AM/PM
+      const dateTimeString = submittedDate.toLocaleString('en-US', {
+        month: '2-digit',
+        day: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: true
+      });
+      
       return [
-        s.student_id,
+        s.student_id || '',
         formData.lastName || '',
         formData.firstName || '',
-        s.course,
-        s.year_level,
-        s.contact_number,
-        new Date(s.created_at).toLocaleDateString()
+        s.course || '',
+        s.year_level || '',
+        s.contact_number || '',
+        dateTimeString
       ];
     });
 
@@ -858,37 +869,54 @@ function StudentModal({ mode, submission, onClose, onSave }: any) {
               {formData.documentUrls && formData.documentUrls.length > 0 && (
                 <div className="border-t pt-6">
                   <h3 className="text-lg font-bold text-gray-800 mb-4">
-                    Uploaded Documents ({formData.documentUrls.length})
+                    📄 Uploaded Documents ({formData.documentUrls.length})
                   </h3>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    {formData.documentUrls.map((url: string, index: number) => (
-                      <div key={index} className="border rounded-lg overflow-hidden">
-                        <div className="aspect-square bg-gray-100">
-                          <img
-                            src={url}
-                            alt={`Document ${index + 1}`}
-                            className="w-full h-full object-cover cursor-pointer hover:opacity-80 transition"
-                            onClick={() => window.open(url, '_blank')}
-                          />
+                    {formData.documentUrls.map((url: string, index: number) => {
+                      const isPDF = url.toLowerCase().includes('.pdf') || url.includes('application/pdf');
+                      return (
+                        <div key={index} className="border rounded-lg overflow-hidden shadow-sm hover:shadow-md transition">
+                          <div className="aspect-square bg-gray-100">
+                            {isPDF ? (
+                              // PDF Preview
+                              <div 
+                                className="w-full h-full flex flex-col items-center justify-center bg-red-50 cursor-pointer hover:bg-red-100 transition"
+                                onClick={() => window.open(url, '_blank')}
+                              >
+                                <svg className="w-16 h-16 text-red-600 mb-2" fill="currentColor" viewBox="0 0 20 20">
+                                  <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clipRule="evenodd" />
+                                </svg>
+                                <p className="text-sm font-bold text-red-600">PDF Document</p>
+                              </div>
+                            ) : (
+                              // Image Preview
+                              <img
+                                src={url}
+                                alt={`Document ${index + 1}`}
+                                className="w-full h-full object-cover cursor-pointer hover:opacity-80 transition"
+                                onClick={() => window.open(url, '_blank')}
+                              />
+                            )}
+                          </div>
+                          <div className="p-2 bg-gray-50 text-center">
+                            <p className="text-xs font-medium text-gray-700">
+                              {isPDF ? '📄 PDF' : '📷 Image'} {index + 1}
+                            </p>
+                            <a
+                              href={url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-xs text-blue-600 hover:underline"
+                            >
+                              {isPDF ? 'Open PDF' : 'View Full Size'}
+                            </a>
+                          </div>
                         </div>
-                        <div className="p-2 bg-gray-50 text-center">
-                          <p className="text-xs font-medium text-gray-700">
-                            Document {index + 1}
-                          </p>
-                          <a
-                            href={url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-xs text-blue-600 hover:underline"
-                          >
-                            View Full Size
-                          </a>
-                        </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                   <p className="text-xs text-gray-500 mt-3">
-                    <strong>Documents:</strong> 1. WHODAS 2.0 Form, 2. Individual Inventory Form, 3. PID-5-BF Form, 4. Counseling Consent Form
+                    <strong>Documents:</strong> 1. WHODAS 2.0 Form, 2. Individual Inventory Form, 3. PID-5-BF Form, 4. Counseling Consent Form (Images or PDFs)
                   </p>
                 </div>
               )}

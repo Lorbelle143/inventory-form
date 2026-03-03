@@ -34,7 +34,7 @@ function App() {
         <Route path="/register" element={!user ? <Register /> : <Navigate to="/dashboard" />} />
         <Route path="/dashboard" element={user && !isAdmin ? <StudentDashboard /> : <Navigate to="/login" />} />
         <Route path="/admin" element={user && isAdmin ? <AdminDashboard /> : <Navigate to="/login" />} />
-        <Route path="/inventory-form" element={user && !isAdmin ? <InventoryForm /> : <Navigate to="/login" />} />
+        <Route path="/inventory-form" element={user ? <InventoryForm /> : <Navigate to="/login" />} />
         <Route path="/" element={<Navigate to="/login" />} />
       </Routes>
     </BrowserRouter>
