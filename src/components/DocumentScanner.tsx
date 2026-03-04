@@ -185,9 +185,10 @@ export default function DocumentScanner({ onDocumentsChange, maxDocuments = 4 }:
         <ul className="text-xs text-blue-700 mt-1 space-y-1">
           <li>• Use "Scan/Camera" to take photos directly</li>
           <li>• Use "Upload Files" to select images or PDFs</li>
-          <li>• Maximum {maxDocuments} documents</li>
+          <li>• Maximum {maxDocuments} documents (Optional)</li>
           <li>• Images: 5MB max (JPG, PNG)</li>
           <li>• PDFs: 10MB max</li>
+          <li>• You can submit without documents and upload later</li>
         </ul>
       </div>
     </div>

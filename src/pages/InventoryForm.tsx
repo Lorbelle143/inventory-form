@@ -192,11 +192,12 @@ export default function InventoryForm() {
     }
 
     // In edit mode, documents are optional if already exist
-    if (!isEditMode && documentFiles.length !== 4) {
-      setError('Please upload all 4 required documents');
-      setLoading(false);
-      return;
-    }
+    // Documents are now optional for all submissions
+    // if (!isEditMode && documentFiles.length !== 4) {
+    //   setError('Please upload all 4 required documents');
+    //   setLoading(false);
+    //   return;
+    // }
 
     try {
       let photoUrl = existingPhotoUrl;
@@ -207,6 +208,7 @@ export default function InventoryForm() {
 
       // Upload new photo if provided
       if (photoFile) {
+        setError('📤 Uploading photo...');
         const fileExt = photoFile.name.split('.').pop();
         const fileName = `${userId}_${Date.now()}.${fileExt}`;
         const { error: uploadError } = await supabase.storage
@@ -222,13 +224,15 @@ export default function InventoryForm() {
         photoUrl = publicUrl;
       }
 
-      // Upload new documents if provided
+      // Upload new documents if provided (parallel upload for speed)
       if (documentFiles.length > 0) {
+        setError(`📤 Uploading ${documentFiles.length} document(s)...`);
         uploadedDocUrls = [];
-        for (let i = 0; i < documentFiles.length; i++) {
-          const docFile = documentFiles[i];
+        
+        // Upload all documents in parallel for faster processing
+        const uploadPromises = documentFiles.map(async (docFile, i) => {
           const docExt = docFile.name.split('.').pop();
-          const docFileName = `${userId}_doc${i + 1}_${Date.now()}.${docExt}`;
+          const docFileName = `${userId}_doc${i + 1}_${Date.now()}_${Math.random().toString(36).substring(7)}.${docExt}`;
           
           const { error: docUploadError } = await supabase.storage
             .from('student-photos')
@@ -240,9 +244,14 @@ export default function InventoryForm() {
             .from('student-photos')
             .getPublicUrl(docFileName);
 
-          uploadedDocUrls.push(docUrl);
-        }
+          return docUrl;
+        });
+
+        // Wait for all uploads to complete
+        uploadedDocUrls = await Promise.all(uploadPromises);
       }
+
+      setError('💾 Saving to database...');
 
       const submissionData = {
         user_id: userId,
@@ -418,10 +427,10 @@ export default function InventoryForm() {
                 {/* Document Scanner */}
                 <div className="border-2 border-blue-200 rounded-lg p-6 bg-blue-50">
                   <h4 className="text-md font-bold text-gray-800 mb-4">
-                    📄 Required Documents (4) {isEditMode && '(Optional - leave empty to keep current documents)'}
+                    📄 Documents (Optional - Up to 4)
                   </h4>
                   <p className="text-sm text-gray-600 mb-4">
-                    Please scan or photograph these 4 documents:
+                    You can upload these documents now or later:
                   </p>
                   <ul className="text-sm text-gray-700 mb-4 space-y-1">
                     <li>1. WHODAS 2.0 Form</li>
@@ -429,6 +438,9 @@ export default function InventoryForm() {
                     <li>3. PID-5-BF Form</li>
                     <li>4. Counseling Consent Form</li>
                   </ul>
+                  <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded p-2 mb-4">
+                    ℹ️ Don't have the documents yet? You can submit the form now and upload them later by editing your submission.
+                  </p>
                   <DocumentScanner
                     onDocumentsChange={setDocumentFiles}
                     maxDocuments={4}
@@ -807,13 +819,31 @@ export default function InventoryForm() {
             )}
 
             {error && (
-              <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded-lg flex items-start gap-3">
-                <svg className="w-6 h-6 text-red-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className={`border-l-4 p-4 rounded-lg flex items-start gap-3 ${
+                error.includes('📤') || error.includes('💾') 
+                  ? 'bg-blue-50 border-blue-500' 
+                  : 'bg-red-50 border-red-500'
+              }`}>
+                <svg className={`w-6 h-6 flex-shrink-0 ${
+                  error.includes('📤') || error.includes('💾') 
+                    ? 'text-blue-500' 
+                    : 'text-red-500'
+                }`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
                 <div>
-                  <p className="font-medium text-red-800">Error</p>
-                  <p className="text-sm text-red-700">{error}</p>
+                  <p className={`font-medium ${
+                    error.includes('📤') || error.includes('💾') 
+                      ? 'text-blue-800' 
+                      : 'text-red-800'
+                  }`}>
+                    {error.includes('📤') || error.includes('💾') ? 'Processing' : 'Error'}
+                  </p>
+                  <p className={`text-sm ${
+                    error.includes('📤') || error.includes('💾') 
+                      ? 'text-blue-700' 
+                      : 'text-red-700'
+                  }`}>{error}</p>
                 </div>
               </div>
             )}
