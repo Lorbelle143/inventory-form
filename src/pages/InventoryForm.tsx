@@ -392,7 +392,16 @@ export default function InventoryForm() {
             </div>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form 
+            onSubmit={handleSubmit} 
+            onKeyDown={(e) => {
+              // Prevent Enter key from submitting form unless on submit button
+              if (e.key === 'Enter' && e.target instanceof HTMLInputElement) {
+                e.preventDefault();
+              }
+            }}
+            className="space-y-6"
+          >
 
             {/* Section 1: Basic Information */}
             {currentSection === 1 && (
