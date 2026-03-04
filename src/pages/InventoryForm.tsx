@@ -184,12 +184,13 @@ export default function InventoryForm() {
     setError('');
     setLoading(true);
 
-    // In edit mode, photo is optional if already exists
-    if (!isEditMode && !photoFile) {
-      setError('Please upload a photo');
-      setLoading(false);
-      return;
-    }
+    // Photo and documents are now optional for all submissions
+    // Students can upload them later by editing their submission
+    // if (!isEditMode && !photoFile) {
+    //   setError('Please upload a photo');
+    //   setLoading(false);
+    //   return;
+    // }
 
     // In edit mode, documents are optional if already exist
     // Documents are now optional for all submissions
@@ -260,7 +261,7 @@ export default function InventoryForm() {
         course: formData.programYear,
         year_level: formData.programYear.split(' ')[0] || '',
         contact_number: formData.mobilePhone,
-        photo_url: photoUrl,
+        photo_url: photoUrl || 'https://via.placeholder.com/150?text=No+Photo',
         form_data: { ...formData, documentUrls: uploadedDocUrls },
         google_form_response_id: '',
       };
@@ -421,16 +422,18 @@ export default function InventoryForm() {
                 {/* Photo Upload */}
                 <div className="border-2 border-dashed border-gray-300 rounded-lg p-6">
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Student Photo (2x2) {isEditMode && '(Optional - leave empty to keep current photo)'}
+                    Student Photo (2x2) - Optional
                   </label>
+                  <p className="text-xs text-gray-500 mb-3">
+                    You can upload your photo now or later by editing your submission
+                  </p>
                   <input 
                     type="file" 
                     accept="image/*" 
                     onChange={handlePhotoChange} 
                     className="block w-full text-sm" 
-                    required={!isEditMode} 
                   />
-                  {photoPreview && <img src={photoPreview} alt="Preview" className="mt-4 w-32 h-32 object-cover rounded-lg" />}
+                  {photoPreview && <img src={photoPreview} alt="Preview" className="mt-4 w-32 h-32 object-cover rounded-lg shadow-md" />}
                 </div>
 
                 {/* Document Scanner */}
