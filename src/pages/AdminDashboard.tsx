@@ -68,13 +68,21 @@ export default function AdminDashboard() {
     navigate(`/inventory-form?edit=${submission.id}&admin=true`);
   };
 
-  const handleDeleteStudent = async (id: string, studentName: string, studentId: string) => {
-    if (!confirm(`Are you sure you want to delete ${studentName}'s profile?\n\nThis will only remove:\n- Student profile (login account)\n\nTheir inventory submissions will remain in the system.\n\nThis action cannot be undone.`)) {
+  const handleDeleteStudent = async (id: string, studentName: string) => {
+    if (!confirm(`Are you sure you want to delete ${studentName}'s profile?\n\nThis will remove:\n- Student profile (login account)\n- Authentication account from Supabase\n\nTheir inventory submissions will remain in the system.\n\nThis action cannot be undone.`)) {
       return;
     }
 
     try {
-      // Only delete the student profile, NOT their submissions
+      // Delete the auth user from Supabase Auth
+      const { error: authError } = await supabase.auth.admin.deleteUser(id);
+      
+      if (authError) {
+        console.error('Error deleting auth user:', authError);
+        // Continue even if auth deletion fails (user might not exist in auth)
+      }
+
+      // Delete the student profile from profiles table
       const { error: profileError } = await supabase
         .from('profiles')
         .delete()
@@ -82,7 +90,7 @@ export default function AdminDashboard() {
 
       if (profileError) throw profileError;
 
-      alert('✅ Student profile deleted successfully\n\nNote: Their inventory submissions are still in the system.');
+      alert('✅ Student profile and authentication deleted successfully\n\nNote: Their inventory submissions are still in the system.');
       loadData();
     } catch (error: any) {
       console.error('Delete error:', error);
@@ -571,7 +579,7 @@ export default function AdminDashboard() {
                         </button>
                       </div>
                       <button
-                        onClick={() => handleDeleteStudent(student.id, student.full_name, student.student_id)}
+                        onClick={() => handleDeleteStudent(student.id, student.full_name)}
                         className="mt-2 w-full px-3 py-2 bg-red-600 text-white text-sm rounded-lg hover:bg-red-700 transition font-medium shadow-md"
                       >
                         Delete
