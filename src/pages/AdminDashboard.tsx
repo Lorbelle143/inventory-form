@@ -69,22 +69,12 @@ export default function AdminDashboard() {
   };
 
   const handleDeleteStudent = async (id: string, studentName: string, studentId: string) => {
-    if (!confirm(`Are you sure you want to delete ${studentName}?\n\nThis will permanently remove:\n- Student profile\n- All associated inventory submissions\n- All uploaded photos\n\nThis action cannot be undone.`)) {
+    if (!confirm(`Are you sure you want to delete ${studentName}'s profile?\n\nThis will only remove:\n- Student profile (login account)\n\nTheir inventory submissions will remain in the system.\n\nThis action cannot be undone.`)) {
       return;
     }
 
     try {
-      // Delete all inventory submissions for this student
-      const { error: submissionsError } = await supabase
-        .from('inventory_submissions')
-        .delete()
-        .eq('student_id', studentId);
-
-      if (submissionsError) {
-        console.error('Error deleting submissions:', submissionsError);
-      }
-
-      // Delete the student profile
+      // Only delete the student profile, NOT their submissions
       const { error: profileError } = await supabase
         .from('profiles')
         .delete()
@@ -92,7 +82,7 @@ export default function AdminDashboard() {
 
       if (profileError) throw profileError;
 
-      alert('✅ Student deleted successfully');
+      alert('✅ Student profile deleted successfully\n\nNote: Their inventory submissions are still in the system.');
       loadData();
     } catch (error: any) {
       console.error('Delete error:', error);
