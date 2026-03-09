@@ -10,6 +10,7 @@ export default function Login() {
   const [isAdminLogin, setIsAdminLogin] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
   const { setUser, setIsAdmin } = useAuthStore();
 
@@ -83,113 +84,169 @@ export default function Login() {
 
     setLoading(false);
   };
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
-      <div className="bg-white rounded-lg shadow-xl p-8 w-full max-w-md">
-        <div className="text-center mb-8">
-          <img 
-            src="data:image/jpeg;base64,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" 
-            alt="Guidance Logo" 
-            className="mx-auto mb-4 w-24 h-24 object-contain"
-          />
-          <h1 className="text-3xl font-bold text-gray-800">Guidance Counseling Inventory Form</h1>
-          <p className="text-gray-600 mt-2">Sign in to your account</p>
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900 flex items-center justify-center p-4 relative overflow-hidden">
+      {/* Animated background elements */}
+      <div className="absolute inset-0 overflow-hidden">
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-blue-500 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob"></div>
+        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-indigo-500 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob animation-delay-2000"></div>
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-purple-500 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob animation-delay-4000"></div>
+      </div>
+
+      <div className="relative bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl w-full max-w-md p-8 border border-white/20">
+        {/* Logo/Icon */}
+        <div className="flex justify-center mb-6">
+          <div className="w-16 h-16 bg-gradient-to-br from-indigo-600 to-blue-600 rounded-2xl flex items-center justify-center shadow-lg">
+            <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+            </svg>
+          </div>
         </div>
 
-        <form onSubmit={handleLogin} className="space-y-4">
-          {!isAdminLogin ? (
-            <>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Student ID</label>
-                <input
-                  type="text"
-                  value={studentId}
-                  onChange={(e) => setStudentId(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="Enter your Student ID"
-                  required
-                />
-              </div>
+        <div className="text-center mb-8">
+          <h1 className="text-3xl font-bold bg-gradient-to-r from-indigo-600 to-blue-600 bg-clip-text text-transparent mb-2">
+            Guidance Counseling Inventory Management
+          </h1>
+          <p className={`text-sm font-semibold ${isAdminLogin ? 'text-orange-600' : 'text-gray-600'}`}>
+            {isAdminLogin ? '⚠️ Admin Access' : 'Student Portal'}
+          </p>
+        </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
+        {error && (
+          <div className="mb-6 p-4 bg-red-50 border-l-4 border-red-500 text-red-700 rounded-lg text-sm flex items-start gap-3 animate-shake">
+            <svg className="w-5 h-5 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+            </svg>
+            <span>{error}</span>
+          </div>
+        )}
+
+        <form onSubmit={handleLogin} className="space-y-5">
+          {isAdminLogin ? (
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Master Key
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+                  </svg>
+                </div>
                 <input
                   type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="Enter your password"
+                  value={masterKey}
+                  onChange={(e) => setMasterKey(e.target.value)}
+                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200 bg-gray-50 focus:bg-white"
+                  placeholder="Enter master key"
                   required
                 />
               </div>
-            </>
-          ) : (
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Admin Master Key</label>
-              <input
-                type="password"
-                value={masterKey}
-                onChange={(e) => setMasterKey(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="Enter master key"
-                required
-              />
             </div>
-          )}
-
-          {error && (
-            <div className="bg-red-50 text-red-600 p-3 rounded-lg text-sm">{error}</div>
+          ) : (
+            <>
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Student ID
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 100-4 2 2 0 000 4zm0 0c1.306 0 2.417.835 2.83 2M9 14a3.001 3.001 0 00-2.83 2M15 11h3m-3 4h2" />
+                    </svg>
+                  </div>
+                  <input
+                    type="text"
+                    value={studentId}
+                    onChange={(e) => setStudentId(e.target.value)}
+                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200 bg-gray-50 focus:bg-white"
+                    placeholder="Enter your student ID"
+                    required
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Password
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                    </svg>
+                  </div>
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="w-full pl-10 pr-12 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200 bg-gray-50 focus:bg-white"
+                    placeholder="Enter your password"
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                  >
+                    {showPassword ? (
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                      </svg>
+                    ) : (
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+                      </svg>
+                    )}
+                  </button>
+                </div>
+              </div>
+            </>
           )}
 
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-blue-600 text-white py-2 rounded-lg font-medium hover:bg-blue-700 transition disabled:opacity-50"
+            className="w-full bg-gradient-to-r from-indigo-600 to-blue-600 text-white py-3 px-4 rounded-xl font-semibold hover:from-indigo-700 hover:to-blue-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
           >
-            {loading ? 'Signing in...' : 'Sign In'}
+            {loading ? (
+              <span className="flex items-center justify-center gap-2">
+                <svg className="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Signing in...
+              </span>
+            ) : (
+              'Sign In'
+            )}
           </button>
         </form>
 
         {!isAdminLogin && (
-          <>
-            <p className="text-center mt-6 text-sm text-gray-600">
+          <div className="mt-8 pt-6 border-t border-gray-200">
+            <p className="text-center text-sm text-gray-600">
               Don't have an account?{' '}
-              <Link to="/register" className="text-blue-600 hover:underline font-medium">
+              <Link to="/register" className="text-indigo-600 hover:text-indigo-700 font-semibold hover:underline transition-colors">
                 Register here
               </Link>
             </p>
-            <div className="mt-4 p-3 bg-blue-50 rounded-lg">
-              <p className="text-xs text-blue-800 text-center">
-                <strong>First time?</strong> Register as a student first, then login with your Student ID and password.
-              </p>
-            </div>
-          </>
-        )}
-
-        {/* Admin Access Button */}
-        {!isAdminLogin && (
-          <div className="mt-6 pt-6 border-t border-gray-200">
-            <button
-              onClick={() => setIsAdminLogin(true)}
-              className="w-full py-2 px-4 text-xs text-gray-600 hover:text-gray-800 hover:bg-gray-50 rounded-lg transition border border-gray-300"
-            >
-              🔒 Admin Access
-            </button>
           </div>
         )}
 
-        {/* Back to Student Login */}
-        {isAdminLogin && (
-          <div className="mt-6 pt-6 border-t border-gray-200">
-            <button
-              onClick={() => setIsAdminLogin(false)}
-              className="w-full py-2 px-4 text-xs text-gray-600 hover:text-gray-800 hover:bg-gray-50 rounded-lg transition"
-            >
-              ← Back to Student Login
-            </button>
-          </div>
-        )}
+        {/* Admin Login Toggle at Bottom */}
+        <div className="mt-6 pt-6 border-t border-gray-200">
+          <button
+            type="button"
+            onClick={() => setIsAdminLogin(!isAdminLogin)}
+            className="w-full text-center text-xs text-gray-400 hover:text-orange-600 transition-colors flex items-center justify-center gap-1.5 py-2"
+          >
+            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+            </svg>
+            {isAdminLogin ? 'Switch to Student Login' : 'Admin Access'}
+          </button>
+        </div>
       </div>
     </div>
   );
