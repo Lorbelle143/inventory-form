@@ -394,10 +394,16 @@ export default function InventoryForm() {
           </div>
 
           <form 
-            onSubmit={handleSubmit} 
+            onSubmit={(e) => {
+              e.preventDefault();
+              // Only submit if on Section 3
+              if (currentSection === 3) {
+                handleSubmit(e);
+              }
+            }}
             onKeyDown={(e) => {
-              // Prevent Enter key from submitting form unless on submit button
-              if (e.key === 'Enter' && e.target instanceof HTMLInputElement) {
+              // Prevent Enter key from submitting form
+              if (e.key === 'Enter' && (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement)) {
                 e.preventDefault();
               }
             }}
