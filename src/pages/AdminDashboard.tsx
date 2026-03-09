@@ -2,9 +2,14 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import { supabase } from '../lib/supabase';
+import { useToastContext } from '../contexts/ToastContext';
+import LoadingSpinner, { LoadingOverlay } from '../components/LoadingSpinner';
+import AdminAnalytics from '../components/AdminAnalytics';
+import { printSubmission, printAllSubmissions } from '../utils/printUtils';
 
 export default function AdminDashboard() {
   const { signOut } = useAuthStore();
+  const toast = useToastContext();
   const [submissions, setSubmissions] = useState<any[]>([]);
   const [students, setStudents] = useState<any[]>([]);
   const [stats, setStats] = useState({ totalStudents: 0, totalSubmissions: 0 });
@@ -13,7 +18,11 @@ export default function AdminDashboard() {
   const [showModal, setShowModal] = useState(false);
   const [modalMode, setModalMode] = useState<'view' | 'create' | 'edit'>('view');
   const [selectedSubmission, setSelectedSubmission] = useState<any>(null);
-  const [viewMode, setViewMode] = useState<'submissions' | 'students'>('submissions');
+  const [viewMode, setViewMode] = useState<'submissions' | 'students' | 'analytics'>('submissions');
+  const [loading, setLoading] = useState(true);
+  const [actionLoading, setActionLoading] = useState(false);
+  const [filterCourse, setFilterCourse] = useState<string>('all');
+  const [filterYear, setFilterYear] = useState<string>('all');
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -21,30 +30,37 @@ export default function AdminDashboard() {
   }, []);
 
   const loadData = async () => {
-    const { data: studentsData } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('is_admin', false);
+    try {
+      setLoading(true);
+      const { data: studentsData } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('is_admin', false);
 
-    const { data: submissionsData } = await supabase
-      .from('inventory_submissions')
-      .select('*');
+      const { data: submissionsData } = await supabase
+        .from('inventory_submissions')
+        .select('*');
 
-    // Merge student profiles with their submission photos
-    const studentsWithPhotos = (studentsData || []).map(student => {
-      const submission = (submissionsData || []).find(s => s.student_id === student.student_id);
-      return {
-        ...student,
-        photo_url: submission?.photo_url || null
-      };
-    });
+      // Merge student profiles with their submission photos
+      const studentsWithPhotos = (studentsData || []).map(student => {
+        const submission = (submissionsData || []).find(s => s.student_id === student.student_id);
+        return {
+          ...student,
+          photo_url: submission?.photo_url || null
+        };
+      });
 
-    setStudents(studentsWithPhotos);
-    setSubmissions(submissionsData || []);
-    setStats({
-      totalStudents: studentsData?.length || 0,
-      totalSubmissions: submissionsData?.length || 0,
-    });
+      setStudents(studentsWithPhotos);
+      setSubmissions(submissionsData || []);
+      setStats({
+        totalStudents: studentsData?.length || 0,
+        totalSubmissions: submissionsData?.length || 0,
+      });
+    } catch (error: any) {
+      toast.error('Failed to load data: ' + error.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleSignOut = async () => {
@@ -74,6 +90,7 @@ export default function AdminDashboard() {
     }
 
     try {
+      setActionLoading(true);
       // Delete the auth user from Supabase Auth
       const { error: authError } = await supabase.auth.admin.deleteUser(id);
       
@@ -90,11 +107,13 @@ export default function AdminDashboard() {
 
       if (profileError) throw profileError;
 
-      alert('✅ Student profile and authentication deleted successfully\n\nNote: Their inventory submissions are still in the system.');
+      toast.success('Student profile deleted successfully');
       loadData();
     } catch (error: any) {
       console.error('Delete error:', error);
-      alert('❌ Error deleting student: ' + (error.message || 'Unknown error'));
+      toast.error('Error deleting student: ' + (error.message || 'Unknown error'));
+    } finally {
+      setActionLoading(false);
     }
   };
 
@@ -387,7 +406,7 @@ export default function AdminDashboard() {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <button
             onClick={() => setViewMode('students')}
             className={`group bg-white rounded-2xl shadow-lg p-8 text-left transition-all duration-300 hover:shadow-2xl transform hover:-translate-y-1 ${
@@ -453,9 +472,48 @@ export default function AdminDashboard() {
               Click to view inventory submissions
             </p>
           </button>
+
+          <button
+            onClick={() => setViewMode('analytics')}
+            className={`group bg-white rounded-2xl shadow-lg p-8 text-left transition-all duration-300 hover:shadow-2xl transform hover:-translate-y-1 ${
+              viewMode === 'analytics' ? 'ring-4 ring-purple-400 ring-opacity-50' : ''
+            }`}
+          >
+            <div className="flex items-center justify-between mb-4">
+              <div className={`w-16 h-16 rounded-2xl flex items-center justify-center shadow-lg transition-all ${
+                viewMode === 'analytics' 
+                  ? 'bg-gradient-to-br from-purple-500 to-indigo-600' 
+                  : 'bg-gradient-to-br from-purple-400 to-indigo-500 group-hover:from-purple-500 group-hover:to-indigo-600'
+              }`}>
+                <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                </svg>
+              </div>
+              {viewMode === 'analytics' && (
+                <div className="px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-xs font-bold">
+                  ACTIVE
+                </div>
+              )}
+            </div>
+            <h3 className="text-lg font-semibold text-gray-600 mb-2">Analytics</h3>
+            <p className="text-5xl font-bold text-purple-600 mb-3">📊</p>
+            <p className="text-sm text-gray-500 flex items-center gap-1">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+              </svg>
+              Click to view statistics & reports
+            </p>
+          </button>
         </div>
 
+        {/* Analytics View */}
+        {viewMode === 'analytics' && (
+          <AdminAnalytics submissions={submissions} students={students} />
+        )}
+
         {/* Main Content Card */}
+        {viewMode !== 'analytics' && (
         <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
           <div className="bg-gradient-to-r from-gray-50 to-white px-8 py-6 border-b-2 border-gray-100">
             <div className="flex justify-between items-center mb-4">
@@ -480,6 +538,15 @@ export default function AdminDashboard() {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                       </svg>
                       Add Student
+                    </button>
+                    <button
+                      onClick={() => printAllSubmissions(filteredAndSortedSubmissions)}
+                      className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-xl hover:from-purple-700 hover:to-pink-700 transition shadow-lg hover:shadow-xl font-medium"
+                    >
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                      </svg>
+                      Print Report
                     </button>
                     <button
                       onClick={exportToCSV}
@@ -631,26 +698,32 @@ export default function AdminDashboard() {
                     </p>
                     
                     {/* Action Buttons */}
-                    <div className="flex gap-2">
+                    <div className="grid grid-cols-2 gap-2">
                       <button
                         onClick={() => handleView(submission)}
-                        className="flex-1 px-3 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition"
+                        className="px-3 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition font-medium"
                       >
-                        View
+                        👁️ View
                       </button>
                       <button
                         onClick={() => handleEdit(submission)}
-                        className="flex-1 px-3 py-2 bg-yellow-600 text-white text-sm rounded-lg hover:bg-yellow-700 transition"
+                        className="px-3 py-2 bg-amber-600 text-white text-sm rounded-lg hover:bg-amber-700 transition font-medium"
                       >
-                        Edit
+                        ✏️ Edit
+                      </button>
+                      <button
+                        onClick={() => printSubmission(submission)}
+                        className="px-3 py-2 bg-purple-600 text-white text-sm rounded-lg hover:bg-purple-700 transition font-medium"
+                      >
+                        🖨️ Print
+                      </button>
+                      <button
+                        onClick={() => handleDelete(submission.id, submission.full_name)}
+                        className="px-3 py-2 bg-red-600 text-white text-sm rounded-lg hover:bg-red-700 transition font-medium"
+                      >
+                        🗑️ Delete
                       </button>
                     </div>
-                    <button
-                      onClick={() => handleDelete(submission.id, submission.full_name)}
-                      className="mt-2 w-full px-3 py-2 bg-red-600 text-white text-sm rounded-lg hover:bg-red-700 transition"
-                    >
-                      Delete
-                    </button>
                   </div>
                 </div>
               );
@@ -690,6 +763,9 @@ export default function AdminDashboard() {
           onSave={selectedSubmission?.email && !selectedSubmission?.course ? handleSaveStudent : handleSave}
         />
       )}
+      
+      {/* Loading Overlay */}
+      {actionLoading && <LoadingOverlay text="Processing..." />}
     </div>
   );
 }
