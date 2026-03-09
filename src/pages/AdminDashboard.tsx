@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import { supabase } from '../lib/supabase';
 import { useToastContext } from '../contexts/ToastContext';
-import LoadingSpinner, { LoadingOverlay } from '../components/LoadingSpinner';
+import { LoadingOverlay } from '../components/LoadingSpinner';
 import AdminAnalytics from '../components/AdminAnalytics';
 import { printSubmission, printAllSubmissions } from '../utils/printUtils';
 
@@ -19,10 +19,7 @@ export default function AdminDashboard() {
   const [modalMode, setModalMode] = useState<'view' | 'create' | 'edit'>('view');
   const [selectedSubmission, setSelectedSubmission] = useState<any>(null);
   const [viewMode, setViewMode] = useState<'submissions' | 'students' | 'analytics'>('submissions');
-  const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
-  const [filterCourse, setFilterCourse] = useState<string>('all');
-  const [filterYear, setFilterYear] = useState<string>('all');
   const navigate = useNavigate();
 
   useEffect(() => {
