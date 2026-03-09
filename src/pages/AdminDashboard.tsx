@@ -752,20 +752,21 @@ export default function AdminDashboard() {
             </div>
           )}
         </div>
-      </div>
+        )}
 
-      {/* Modal for View/Create/Edit */}
-      {showModal && (
-        <StudentModal
-          mode={modalMode}
-          submission={selectedSubmission}
-          onClose={() => setShowModal(false)}
-          onSave={selectedSubmission?.email && !selectedSubmission?.course ? handleSaveStudent : handleSave}
-        />
-      )}
-      
-      {/* Loading Overlay */}
-      {actionLoading && <LoadingOverlay text="Processing..." />}
+        {/* Modal for View/Create/Edit */}
+        {showModal && (
+          <StudentModal
+            mode={modalMode}
+            submission={selectedSubmission}
+            onClose={() => setShowModal(false)}
+            onSave={selectedSubmission?.email && !selectedSubmission?.course ? handleSaveStudent : handleSave}
+          />
+        )}
+        
+        {/* Loading Overlay */}
+        {actionLoading && <LoadingOverlay text="Processing..." />}
+      </div>
     </div>
   );
 }
