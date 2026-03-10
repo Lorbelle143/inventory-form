@@ -369,7 +369,15 @@ export default function AdminDashboard() {
   });
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+    <div className="min-h-screen relative bg-cover bg-center bg-no-repeat" style={{ backgroundImage: 'url(https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcROE3tdSJOhol7z2c9L5Y6Sawh5ZmEU7GT8Dg&s)' }}>
+      {/* Frosted glass overlay - heavier blur and lighter for readability */}
+      <div className="absolute inset-0 bg-white/80 backdrop-blur-xl"></div>
+      
+      {/* Gradient mesh pattern overlay for professional look */}
+      <div className="absolute inset-0 bg-gradient-to-br from-blue-50/50 via-indigo-50/30 to-purple-50/50"></div>
+      
+      {/* Content wrapper */}
+      <div className="relative z-10">
       {/* Header */}
       <nav className="bg-white shadow-lg border-b-2 border-indigo-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -760,6 +768,7 @@ export default function AdminDashboard() {
         
         {/* Loading Overlay */}
         {actionLoading && <LoadingOverlay text="Processing..." />}
+      </div>
       </div>
     </div>
   );
