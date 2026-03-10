@@ -28,7 +28,6 @@ export default function AdminDashboard() {
 
   const loadData = async () => {
     try {
-      setLoading(true);
       const { data: studentsData } = await supabase
         .from('profiles')
         .select('*')
@@ -55,8 +54,6 @@ export default function AdminDashboard() {
       });
     } catch (error: any) {
       toast.error('Failed to load data: ' + error.message);
-    } finally {
-      setLoading(false);
     }
   };
 
