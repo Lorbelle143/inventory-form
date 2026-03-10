@@ -207,6 +207,11 @@ export const printSubmission = (submission: any) => {
 
   printWindow.document.write(html);
   printWindow.document.close();
+  
+  // Auto-trigger print dialog after a short delay to ensure content is loaded
+  setTimeout(() => {
+    printWindow.print();
+  }, 500);
 };
 
 // Print all submissions (for admin)
@@ -323,4 +328,9 @@ export const printAllSubmissions = (submissions: any[]) => {
 
   printWindow.document.write(html);
   printWindow.document.close();
+  
+  // Auto-trigger print dialog after a short delay to ensure content is loaded
+  setTimeout(() => {
+    printWindow.print();
+  }, 500);
 };

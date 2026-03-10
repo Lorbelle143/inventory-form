@@ -6,7 +6,7 @@ import DocumentScanner from '../components/DocumentScanner';
 import { useSessionTimeout } from '../hooks/useSessionTimeout';
 
 export default function InventoryForm() {
-  const { user, checkAuth } = useAuthStore();
+  const { user } = useAuthStore();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const editId = searchParams.get('edit');
@@ -40,21 +40,6 @@ export default function InventoryForm() {
 
   // Enable session timeout protection (always call hook, but it checks isAdminMode internally)
   useSessionTimeout();
-
-  useEffect(() => {
-    // Skip auth check if admin is creating
-    if (isAdminMode) return;
-    
-    // Verify authentication on component mount
-    const verifyAuth = async () => {
-      await checkAuth();
-      if (!user) {
-        navigate('/login');
-        return;
-      }
-    };
-    verifyAuth();
-  }, [isAdminMode]);
 
   useEffect(() => {
     if (editId && (user || isAdminMode)) {
@@ -401,18 +386,9 @@ export default function InventoryForm() {
               // Only submit if on Section 3
               if (currentSection === 3) {
                 handleSubmit(e);
-              }
-            }}
-            onKeyDown={(e) => {
-              // Prevent Enter key from submitting form in all input fields except textarea
-              if (e.key === 'Enter') {
-                const target = e.target;
-                // Allow Enter in textarea, prevent in all other inputs
-                if (target instanceof HTMLInputElement || 
-                    target instanceof HTMLSelectElement ||
-                    (target instanceof HTMLTextAreaElement && e.shiftKey)) {
-                  e.preventDefault();
-                }
+              } else {
+                // If not on section 3, move to next section
+                setCurrentSection(currentSection + 1);
               }
             }}
             className="space-y-6"

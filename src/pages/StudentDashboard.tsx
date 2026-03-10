@@ -7,7 +7,7 @@ import { useToastContext } from '../contexts/ToastContext';
 import LoadingSpinner from '../components/LoadingSpinner';
 
 export default function StudentDashboard() {
-  const { user, signOut, checkAuth } = useAuthStore();
+  const { user, signOut } = useAuthStore();
   const toast = useToastContext();
   const [profile, setProfile] = useState<any>(null);
   const [submissions, setSubmissions] = useState<any[]>([]);
@@ -18,21 +18,6 @@ export default function StudentDashboard() {
 
   // Enable session timeout protection
   useSessionTimeout();
-
-  useEffect(() => {
-    // Verify authentication on component mount
-    const verifyAuth = async () => {
-      setLoading(true);
-      await checkAuth();
-      if (!user) {
-        navigate('/login');
-        setLoading(false);
-        return;
-      }
-      setLoading(false);
-    };
-    verifyAuth();
-  }, []);
 
   useEffect(() => {
     if (user) {
