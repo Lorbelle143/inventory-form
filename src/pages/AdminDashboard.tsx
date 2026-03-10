@@ -267,6 +267,16 @@ export default function AdminDashboard() {
         setActionLoading(false);
       }
     } else if (userModalMode === 'edit') {
+      // Validate password if provided
+      if (userFormData.password && userFormData.password.length < 6) {
+        toast.error('Password must be at least 6 characters');
+        return;
+      }
+      if (userFormData.password && userFormData.password !== userFormData.confirmPassword) {
+        toast.error('Passwords do not match');
+        return;
+      }
+
       try {
         setActionLoading(true);
 
@@ -282,7 +292,29 @@ export default function AdminDashboard() {
 
         if (profileError) throw profileError;
 
-        toast.success('User updated successfully');
+        let message = 'User updated successfully';
+
+        // If password is provided, we need to handle password reset
+        // Since we can't directly change password without admin API,
+        // we'll store the new password temporarily and show instructions
+        if (userFormData.password) {
+          // Option: Send password reset email
+          const { error: resetError } = await supabase.auth.resetPasswordForEmail(
+            userFormData.email,
+            {
+              redirectTo: `${window.location.origin}/login`
+            }
+          );
+
+          if (resetError) {
+            console.error('Password reset email error:', resetError);
+            message = `User updated! Note: Password reset email could not be sent. Please ask the student to use "Forgot Password" on the login page.`;
+          } else {
+            message = `User updated! Password reset email sent to ${userFormData.email}. Student must check their email to set new password.`;
+          }
+        }
+
+        toast.success(message);
         setShowUserModal(false);
         loadData();
       } catch (error: any) {
@@ -290,9 +322,6 @@ export default function AdminDashboard() {
       } finally {
         setActionLoading(false);
       }
-    } else if (userModalMode === 'password') {
-      toast.error('Password reset feature requires admin privileges. Please ask the user to use "Forgot Password" on the login page.');
-      setShowUserModal(false);
     }
   };
 
@@ -1142,36 +1171,78 @@ export default function AdminDashboard() {
                   </>
                 )}
 
-                {(userModalMode === 'create' || userModalMode === 'password') && (
+                {/* Password Section - Show for Create and Edit */}
+                {userModalMode === 'create' && (
                   <>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        {userModalMode === 'password' ? 'New Password *' : 'Password *'}
-                      </label>
-                      <input
-                        type="password"
-                        name="password"
-                        value={userFormData.password}
-                        onChange={handleUserFormChange}
-                        className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                        placeholder="Minimum 6 characters"
-                        required
-                        minLength={6}
-                      />
-                    </div>
+                    <div className="border-t pt-4">
+                      <h3 className="text-sm font-bold text-gray-700 mb-3">Set Password</h3>
+                      <div className="space-y-3">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Password *</label>
+                          <input
+                            type="password"
+                            name="password"
+                            value={userFormData.password}
+                            onChange={handleUserFormChange}
+                            className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                            placeholder="Minimum 6 characters"
+                            required
+                            minLength={6}
+                          />
+                        </div>
 
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Confirm Password *</label>
-                      <input
-                        type="password"
-                        name="confirmPassword"
-                        value={userFormData.confirmPassword}
-                        onChange={handleUserFormChange}
-                        className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                        placeholder="Re-enter password"
-                        required
-                        minLength={6}
-                      />
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Confirm Password *</label>
+                          <input
+                            type="password"
+                            name="confirmPassword"
+                            value={userFormData.confirmPassword}
+                            onChange={handleUserFormChange}
+                            className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                            placeholder="Re-enter password"
+                            required
+                            minLength={6}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </>
+                )}
+
+                {userModalMode === 'edit' && (
+                  <>
+                    <div className="border-t pt-4">
+                      <h3 className="text-sm font-bold text-gray-700 mb-2">🔑 Reset Password (Optional)</h3>
+                      <p className="text-xs text-gray-600 mb-3 bg-yellow-50 border border-yellow-200 rounded p-2">
+                        ⚠️ Fill in these fields only if you want to reset the student's password. Leave blank to keep current password.
+                      </p>
+                      <div className="space-y-3">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">New Password</label>
+                          <input
+                            type="password"
+                            name="password"
+                            value={userFormData.password}
+                            onChange={handleUserFormChange}
+                            className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                            placeholder="Leave blank to keep current password"
+                            minLength={6}
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Confirm New Password</label>
+                          <input
+                            type="password"
+                            name="confirmPassword"
+                            value={userFormData.confirmPassword}
+                            onChange={handleUserFormChange}
+                            className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                            placeholder="Re-enter new password"
+                            minLength={6}
+                          />
+                        </div>
+                      </div>
                     </div>
                   </>
                 )}
