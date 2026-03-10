@@ -23,10 +23,10 @@ export default function InventoryForm() {
     mobilePhone: '', personalEmail: '', institutionalEmail: '',
     permanentAddress: '', currentAddress: '', spouseAge: '', spouseName: '',
     spouseOccupation: '', spouseContactNumber: '', isWorking: false,
-    workingStatus: '', occupation: '', motherName: '', motherAge: '',
+    workingStatus: '', occupation: '', motherName: '', motherAge: '', motherBirthday: '',
     motherEthnicity: '', motherEducation: '', motherOccupation: '',
     motherCompany: '', motherIncome: '', motherContact: '', fatherName: '',
-    fatherAge: '', fatherEthnicity: '', fatherEducation: '', fatherOccupation: '',
+    fatherAge: '', fatherBirthday: '', fatherEthnicity: '', fatherEducation: '', fatherOccupation: '',
     fatherCompany: '', fatherIncome: '', fatherContact: '', parentsStatus: '',
     numberOfSiblings: '', guardianName: '', guardianAddress: '', hobbies: '',
     talents: '', sports: '', socioCivic: '', schoolOrg: '', hospitalized: '',
@@ -102,6 +102,7 @@ export default function InventoryForm() {
           occupation: loadedFormData.occupation || '',
           motherName: loadedFormData.motherName || '',
           motherAge: loadedFormData.motherAge || '',
+          motherBirthday: loadedFormData.motherBirthday || '',
           motherEthnicity: loadedFormData.motherEthnicity || '',
           motherEducation: loadedFormData.motherEducation || '',
           motherOccupation: loadedFormData.motherOccupation || '',
@@ -110,6 +111,7 @@ export default function InventoryForm() {
           motherContact: loadedFormData.motherContact || '',
           fatherName: loadedFormData.fatherName || '',
           fatherAge: loadedFormData.fatherAge || '',
+          fatherBirthday: loadedFormData.fatherBirthday || '',
           fatherEthnicity: loadedFormData.fatherEthnicity || '',
           fatherEducation: loadedFormData.fatherEducation || '',
           fatherOccupation: loadedFormData.fatherOccupation || '',
@@ -402,9 +404,15 @@ export default function InventoryForm() {
               }
             }}
             onKeyDown={(e) => {
-              // Prevent Enter key from submitting form
-              if (e.key === 'Enter' && (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement)) {
-                e.preventDefault();
+              // Prevent Enter key from submitting form in all input fields except textarea
+              if (e.key === 'Enter') {
+                const target = e.target;
+                // Allow Enter in textarea, prevent in all other inputs
+                if (target instanceof HTMLInputElement || 
+                    target instanceof HTMLSelectElement ||
+                    (target instanceof HTMLTextAreaElement && e.shiftKey)) {
+                  e.preventDefault();
+                }
               }
             }}
             className="space-y-6"
@@ -506,14 +514,37 @@ export default function InventoryForm() {
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Ethnicity</label>
-                    <input type="text" name="ethnicity" value={formData.ethnicity} onChange={handleChange} className="w-full px-4 py-2 border rounded-lg" />
+                    <select name="ethnicity" value={formData.ethnicity} onChange={handleChange} className="w-full px-4 py-2 border rounded-lg">
+                      <option value="">Select</option>
+                      <option value="Tagalog">Tagalog</option>
+                      <option value="Cebuano">Cebuano</option>
+                      <option value="Ilocano">Ilocano</option>
+                      <option value="Bicolano">Bicolano</option>
+                      <option value="Waray">Waray</option>
+                      <option value="Hiligaynon">Hiligaynon</option>
+                      <option value="Kapampangan">Kapampangan</option>
+                      <option value="Pangasinense">Pangasinense</option>
+                      <option value="Indigenous People">Indigenous People</option>
+                      <option value="Others">Others</option>
+                    </select>
                   </div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Religion</label>
-                    <input type="text" name="religion" value={formData.religion} onChange={handleChange} className="w-full px-4 py-2 border rounded-lg" />
+                    <select name="religion" value={formData.religion} onChange={handleChange} className="w-full px-4 py-2 border rounded-lg">
+                      <option value="">Select</option>
+                      <option value="Roman Catholic">Roman Catholic</option>
+                      <option value="Islam">Islam</option>
+                      <option value="Iglesia ni Cristo">Iglesia ni Cristo</option>
+                      <option value="Born Again Christian">Born Again Christian</option>
+                      <option value="Seventh-day Adventist">Seventh-day Adventist</option>
+                      <option value="Jehovah's Witness">Jehovah's Witness</option>
+                      <option value="Buddhism">Buddhism</option>
+                      <option value="Others">Others</option>
+                      <option value="None">None</option>
+                    </select>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Civil Status</label>
@@ -592,16 +623,43 @@ export default function InventoryForm() {
                     <input type="text" name="motherName" value={formData.motherName} onChange={handleChange} className="w-full px-4 py-2 border rounded-lg" />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Age and Birthday</label>
-                    <input type="text" name="motherAge" value={formData.motherAge} onChange={handleChange} className="w-full px-4 py-2 border rounded-lg" />
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Age</label>
+                    <input type="number" name="motherAge" value={formData.motherAge} onChange={handleChange} placeholder="e.g., 45" className="w-full px-4 py-2 border rounded-lg" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Birthday</label>
+                    <input type="date" name="motherBirthday" value={formData.motherBirthday} onChange={handleChange} className="w-full px-4 py-2 border rounded-lg" />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Ethnicity</label>
-                    <input type="text" name="motherEthnicity" value={formData.motherEthnicity} onChange={handleChange} className="w-full px-4 py-2 border rounded-lg" />
+                    <select name="motherEthnicity" value={formData.motherEthnicity} onChange={handleChange} className="w-full px-4 py-2 border rounded-lg">
+                      <option value="">Select</option>
+                      <option value="Tagalog">Tagalog</option>
+                      <option value="Cebuano">Cebuano</option>
+                      <option value="Ilocano">Ilocano</option>
+                      <option value="Bicolano">Bicolano</option>
+                      <option value="Waray">Waray</option>
+                      <option value="Hiligaynon">Hiligaynon</option>
+                      <option value="Kapampangan">Kapampangan</option>
+                      <option value="Pangasinense">Pangasinense</option>
+                      <option value="Indigenous People">Indigenous People</option>
+                      <option value="Others">Others</option>
+                    </select>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Educational Attainment</label>
-                    <input type="text" name="motherEducation" value={formData.motherEducation} onChange={handleChange} className="w-full px-4 py-2 border rounded-lg" />
+                    <select name="motherEducation" value={formData.motherEducation} onChange={handleChange} className="w-full px-4 py-2 border rounded-lg">
+                      <option value="">Select</option>
+                      <option value="Elementary Graduate">Elementary Graduate</option>
+                      <option value="Elementary Undergraduate">Elementary Undergraduate</option>
+                      <option value="High School Graduate">High School Graduate</option>
+                      <option value="High School Undergraduate">High School Undergraduate</option>
+                      <option value="Vocational Graduate">Vocational Graduate</option>
+                      <option value="College Graduate">College Graduate</option>
+                      <option value="College Undergraduate">College Undergraduate</option>
+                      <option value="Master's Degree">Master's Degree</option>
+                      <option value="Doctorate Degree">Doctorate Degree</option>
+                    </select>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Occupation</label>
@@ -613,7 +671,17 @@ export default function InventoryForm() {
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Monthly Income</label>
-                    <input type="text" name="motherIncome" value={formData.motherIncome} onChange={handleChange} className="w-full px-4 py-2 border rounded-lg" />
+                    <select name="motherIncome" value={formData.motherIncome} onChange={handleChange} className="w-full px-4 py-2 border rounded-lg">
+                      <option value="">Select</option>
+                      <option value="Below ₱10,000">Below ₱10,000</option>
+                      <option value="₱10,000 - ₱20,000">₱10,000 - ₱20,000</option>
+                      <option value="₱20,001 - ₱30,000">₱20,001 - ₱30,000</option>
+                      <option value="₱30,001 - ₱40,000">₱30,001 - ₱40,000</option>
+                      <option value="₱40,001 - ₱50,000">₱40,001 - ₱50,000</option>
+                      <option value="₱50,001 - ₱75,000">₱50,001 - ₱75,000</option>
+                      <option value="₱75,001 - ₱100,000">₱75,001 - ₱100,000</option>
+                      <option value="Above ₱100,000">Above ₱100,000</option>
+                    </select>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Contact Number</label>
@@ -635,16 +703,43 @@ export default function InventoryForm() {
                     <input type="text" name="fatherName" value={formData.fatherName} onChange={handleChange} className="w-full px-4 py-2 border rounded-lg" />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Age and Birthday</label>
-                    <input type="text" name="fatherAge" value={formData.fatherAge} onChange={handleChange} className="w-full px-4 py-2 border rounded-lg" />
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Age</label>
+                    <input type="number" name="fatherAge" value={formData.fatherAge} onChange={handleChange} placeholder="e.g., 48" className="w-full px-4 py-2 border rounded-lg" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Birthday</label>
+                    <input type="date" name="fatherBirthday" value={formData.fatherBirthday} onChange={handleChange} className="w-full px-4 py-2 border rounded-lg" />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Ethnicity</label>
-                    <input type="text" name="fatherEthnicity" value={formData.fatherEthnicity} onChange={handleChange} className="w-full px-4 py-2 border rounded-lg" />
+                    <select name="fatherEthnicity" value={formData.fatherEthnicity} onChange={handleChange} className="w-full px-4 py-2 border rounded-lg">
+                      <option value="">Select</option>
+                      <option value="Tagalog">Tagalog</option>
+                      <option value="Cebuano">Cebuano</option>
+                      <option value="Ilocano">Ilocano</option>
+                      <option value="Bicolano">Bicolano</option>
+                      <option value="Waray">Waray</option>
+                      <option value="Hiligaynon">Hiligaynon</option>
+                      <option value="Kapampangan">Kapampangan</option>
+                      <option value="Pangasinense">Pangasinense</option>
+                      <option value="Indigenous People">Indigenous People</option>
+                      <option value="Others">Others</option>
+                    </select>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Educational Attainment</label>
-                    <input type="text" name="fatherEducation" value={formData.fatherEducation} onChange={handleChange} className="w-full px-4 py-2 border rounded-lg" />
+                    <select name="fatherEducation" value={formData.fatherEducation} onChange={handleChange} className="w-full px-4 py-2 border rounded-lg">
+                      <option value="">Select</option>
+                      <option value="Elementary Graduate">Elementary Graduate</option>
+                      <option value="Elementary Undergraduate">Elementary Undergraduate</option>
+                      <option value="High School Graduate">High School Graduate</option>
+                      <option value="High School Undergraduate">High School Undergraduate</option>
+                      <option value="Vocational Graduate">Vocational Graduate</option>
+                      <option value="College Graduate">College Graduate</option>
+                      <option value="College Undergraduate">College Undergraduate</option>
+                      <option value="Master's Degree">Master's Degree</option>
+                      <option value="Doctorate Degree">Doctorate Degree</option>
+                    </select>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Occupation</label>
@@ -656,7 +751,17 @@ export default function InventoryForm() {
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Monthly Income</label>
-                    <input type="text" name="fatherIncome" value={formData.fatherIncome} onChange={handleChange} className="w-full px-4 py-2 border rounded-lg" />
+                    <select name="fatherIncome" value={formData.fatherIncome} onChange={handleChange} className="w-full px-4 py-2 border rounded-lg">
+                      <option value="">Select</option>
+                      <option value="Below ₱10,000">Below ₱10,000</option>
+                      <option value="₱10,000 - ₱20,000">₱10,000 - ₱20,000</option>
+                      <option value="₱20,001 - ₱30,000">₱20,001 - ₱30,000</option>
+                      <option value="₱30,001 - ₱40,000">₱30,001 - ₱40,000</option>
+                      <option value="₱40,001 - ₱50,000">₱40,001 - ₱50,000</option>
+                      <option value="₱50,001 - ₱75,000">₱50,001 - ₱75,000</option>
+                      <option value="₱75,001 - ₱100,000">₱75,001 - ₱100,000</option>
+                      <option value="Above ₱100,000">Above ₱100,000</option>
+                    </select>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Contact Number</label>

@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import { supabase } from '../lib/supabase';
 import { useSessionTimeout } from '../hooks/useSessionTimeout';
-import { printSubmission } from '../utils/printUtils';
 import { useToastContext } from '../contexts/ToastContext';
 import LoadingSpinner from '../components/LoadingSpinner';
 
@@ -14,7 +13,7 @@ export default function StudentDashboard() {
   const [submissions, setSubmissions] = useState<any[]>([]);
   const [showViewModal, setShowViewModal] = useState(false);
   const [selectedSubmission, setSelectedSubmission] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
   // Enable session timeout protection
@@ -23,11 +22,14 @@ export default function StudentDashboard() {
   useEffect(() => {
     // Verify authentication on component mount
     const verifyAuth = async () => {
+      setLoading(true);
       await checkAuth();
       if (!user) {
         navigate('/login');
+        setLoading(false);
         return;
       }
+      setLoading(false);
     };
     verifyAuth();
   }, []);
@@ -71,26 +73,6 @@ export default function StudentDashboard() {
       toast.error('Failed to load submissions');
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleDelete = async (submissionId: string) => {
-    if (!confirm('Are you sure you want to delete this submission? This action cannot be undone.')) {
-      return;
-    }
-
-    try {
-      const { error } = await supabase
-        .from('inventory_submissions')
-        .delete()
-        .eq('id', submissionId);
-
-      if (error) throw error;
-
-      toast.success('Submission deleted successfully');
-      loadSubmissions();
-    } catch (error: any) {
-      toast.error('Failed to delete submission: ' + error.message);
     }
   };
 
@@ -397,24 +379,6 @@ export default function StudentDashboard() {
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                         </svg>
                         Edit
-                      </button>
-                      <button
-                        onClick={() => printSubmission(submission)}
-                        className="flex items-center justify-center gap-1 px-3 py-2.5 bg-purple-600 text-white text-sm font-medium rounded-lg hover:bg-purple-700 transition shadow-md hover:shadow-lg"
-                      >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
-                        </svg>
-                        Print
-                      </button>
-                      <button
-                        onClick={() => handleDelete(submission.id)}
-                        className="flex items-center justify-center gap-1 px-3 py-2.5 bg-red-600 text-white text-sm font-medium rounded-lg hover:bg-red-700 transition shadow-md hover:shadow-lg"
-                      >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                        </svg>
-                        Delete
                       </button>
                     </div>
                   </div>

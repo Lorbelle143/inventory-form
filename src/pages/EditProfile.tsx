@@ -106,7 +106,12 @@ export default function EditProfile() {
             </div>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} onKeyDown={(e) => {
+            // Prevent form submission on Enter key
+            if (e.key === 'Enter' && e.target instanceof HTMLInputElement) {
+              e.preventDefault();
+            }
+          }} className="space-y-6">
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
                 Full Name

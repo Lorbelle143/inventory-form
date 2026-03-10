@@ -246,6 +246,8 @@ export default function AdminDashboard() {
           mobilePhone: formData.mobilePhone,
           birthDate: formData.birthDate,
           gender: formData.gender,
+          ethnicity: formData.ethnicity,
+          religion: formData.religion,
           civilStatus: formData.civilStatus,
           permanentAddress: formData.permanentAddress,
         };
@@ -791,6 +793,8 @@ function StudentModal({ mode, submission, onClose, onSave }: any) {
     mobilePhone: submission?.contact_number || '',
     birthDate: formData.birthDate || '',
     gender: formData.gender || '',
+    ethnicity: formData.ethnicity || '',
+    religion: formData.religion || '',
     civilStatus: formData.civilStatus || '',
     permanentAddress: formData.permanentAddress || '',
     photoUrl: submission?.photo_url || '',
@@ -1008,7 +1012,12 @@ function StudentModal({ mode, submission, onClose, onSave }: any) {
               </div>
             </div>
           ) : (
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit} onKeyDown={(e) => {
+              // Prevent form submission on Enter key
+              if (e.key === 'Enter' && e.target instanceof HTMLInputElement) {
+                e.preventDefault();
+              }
+            }} className="space-y-4">
               {/* Create/Edit Mode - Form Fields */}
               
               {/* Photo Upload Section */}
@@ -1184,6 +1193,50 @@ function StudentModal({ mode, submission, onClose, onSave }: any) {
                         <option value="">Select</option>
                         <option value="Male">Male</option>
                         <option value="Female">Female</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Ethnicity</label>
+                      <select
+                        name="ethnicity"
+                        value={editData.ethnicity}
+                        onChange={handleChange}
+                        className="w-full px-4 py-2 border rounded-lg"
+                      >
+                        <option value="">Select</option>
+                        <option value="Tagalog">Tagalog</option>
+                        <option value="Cebuano">Cebuano</option>
+                        <option value="Ilocano">Ilocano</option>
+                        <option value="Bicolano">Bicolano</option>
+                        <option value="Waray">Waray</option>
+                        <option value="Hiligaynon">Hiligaynon</option>
+                        <option value="Kapampangan">Kapampangan</option>
+                        <option value="Pangasinense">Pangasinense</option>
+                        <option value="Indigenous People">Indigenous People</option>
+                        <option value="Others">Others</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Religion</label>
+                      <select
+                        name="religion"
+                        value={editData.religion}
+                        onChange={handleChange}
+                        className="w-full px-4 py-2 border rounded-lg"
+                      >
+                        <option value="">Select</option>
+                        <option value="Roman Catholic">Roman Catholic</option>
+                        <option value="Islam">Islam</option>
+                        <option value="Iglesia ni Cristo">Iglesia ni Cristo</option>
+                        <option value="Born Again Christian">Born Again Christian</option>
+                        <option value="Seventh-day Adventist">Seventh-day Adventist</option>
+                        <option value="Jehovah's Witness">Jehovah's Witness</option>
+                        <option value="Buddhism">Buddhism</option>
+                        <option value="Others">Others</option>
+                        <option value="None">None</option>
                       </select>
                     </div>
                     <div>
