@@ -57,7 +57,22 @@ export const useAuthStore = create<AuthState>()(
       
       initializeAuth: async () => {
         try {
-          // First, check if we have a stored session
+          // Check if we have a persisted admin session (from localStorage via persist middleware)
+          const currentState = get();
+          
+          // If we have isAdmin flag persisted and a user object, it's an admin session
+          if (currentState.isAdmin && currentState.user?.id === 'admin') {
+            console.log('Restoring admin session from localStorage');
+            set({ 
+              user: currentState.user,
+              isAdmin: true,
+              loading: false,
+              sessionChecked: true 
+            });
+            return;
+          }
+          
+          // Otherwise, check for regular Supabase session
           const { data: { session }, error } = await supabase.auth.getSession();
           
           if (error) {
@@ -135,7 +150,7 @@ export const useAuthStore = create<AuthState>()(
       name: 'auth-storage',
       partialize: (state) => ({ 
         isAdmin: state.isAdmin,
-        // Don't persist user object, let Supabase handle it
+        user: state.isAdmin && state.user?.id === 'admin' ? state.user : null, // Only persist admin user
       }),
     }
   )
