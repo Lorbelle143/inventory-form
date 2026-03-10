@@ -14,6 +14,8 @@ export default function StudentDashboard() {
   const [showViewModal, setShowViewModal] = useState(false);
   const [selectedSubmission, setSelectedSubmission] = useState<any>(null);
   const [loading, setLoading] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filterStatus, setFilterStatus] = useState<'all' | 'complete' | 'incomplete'>('all');
   const navigate = useNavigate();
 
   // Enable session timeout protection
@@ -75,6 +77,32 @@ export default function StudentDashboard() {
     navigate(`/inventory-form?edit=${submissionId}`);
   };
 
+  // Filter submissions
+  const filteredSubmissions = submissions.filter(submission => {
+    const formData = submission.form_data || {};
+    const matchesSearch = 
+      submission.course?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      submission.student_id?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      formData.firstName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      formData.lastName?.toLowerCase().includes(searchTerm.toLowerCase());
+
+    const hasDocuments = formData.documentUrls && formData.documentUrls.length > 0;
+    const matchesFilter = 
+      filterStatus === 'all' ||
+      (filterStatus === 'complete' && hasDocuments) ||
+      (filterStatus === 'incomplete' && !hasDocuments);
+
+    return matchesSearch && matchesFilter;
+  });
+
+  // Calculate stats
+  const stats = {
+    total: submissions.length,
+    complete: submissions.filter(s => s.form_data?.documentUrls?.length > 0).length,
+    incomplete: submissions.filter(s => !s.form_data?.documentUrls?.length).length,
+    lastUpdated: submissions[0] ? new Date(submissions[0].created_at) : null
+  };
+
   return (
     <div className="min-h-screen relative bg-cover bg-center bg-no-repeat" style={{ backgroundImage: 'url(https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcROE3tdSJOhol7z2c9L5Y6Sawh5ZmEU7GT8Dg&s)' }}>
       {/* Frosted glass overlay - heavier blur and lighter for readability */}
@@ -125,6 +153,71 @@ export default function StudentDashboard() {
               <svg className="w-24 h-24 text-blue-400 opacity-50" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
               </svg>
+            </div>
+          </div>
+        </div>
+
+        {/* Statistics Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+          {/* Total Submissions */}
+          <div className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-blue-500 hover:shadow-xl transition-shadow">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600 mb-1">Total Forms</p>
+                <p className="text-3xl font-bold text-gray-900">{stats.total}</p>
+              </div>
+              <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+              </div>
+            </div>
+          </div>
+
+          {/* Complete */}
+          <div className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-green-500 hover:shadow-xl transition-shadow">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600 mb-1">Complete</p>
+                <p className="text-3xl font-bold text-gray-900">{stats.complete}</p>
+              </div>
+              <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+            </div>
+          </div>
+
+          {/* Incomplete */}
+          <div className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-amber-500 hover:shadow-xl transition-shadow">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600 mb-1">Incomplete</p>
+                <p className="text-3xl font-bold text-gray-900">{stats.incomplete}</p>
+              </div>
+              <div className="w-12 h-12 bg-amber-100 rounded-lg flex items-center justify-center">
+                <svg className="w-6 h-6 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+            </div>
+          </div>
+
+          {/* Last Updated */}
+          <div className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-purple-500 hover:shadow-xl transition-shadow">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600 mb-1">Last Updated</p>
+                <p className="text-lg font-bold text-gray-900">
+                  {stats.lastUpdated ? stats.lastUpdated.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'N/A'}
+                </p>
+              </div>
+              <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+                <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+              </div>
             </div>
           </div>
         </div>
@@ -248,19 +341,51 @@ export default function StudentDashboard() {
 
         {/* Submissions Section */}
         <div id="submissions-section" className="bg-white rounded-xl shadow-lg p-6 border border-gray-100 scroll-mt-8">
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center">
                 <svg className="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
               </div>
-              <h3 className="text-xl font-bold text-gray-800">My Submissions</h3>
+              <div>
+                <h3 className="text-xl font-bold text-gray-800">My Submissions</h3>
+                {submissions.length > 0 && (
+                  <p className="text-sm text-gray-500">
+                    Showing {filteredSubmissions.length} of {submissions.length} submissions
+                  </p>
+                )}
+              </div>
             </div>
+
+            {/* Search and Filter */}
             {submissions.length > 0 && (
-              <span className="px-3 py-1 bg-indigo-100 text-indigo-700 rounded-full text-sm font-medium">
-                {submissions.length} {submissions.length === 1 ? 'submission' : 'submissions'}
-              </span>
+              <div className="flex flex-col sm:flex-row gap-3">
+                {/* Search */}
+                <div className="relative">
+                  <svg className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                  <input
+                    type="text"
+                    placeholder="Search submissions..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10 pr-4 py-2 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition w-full sm:w-64"
+                  />
+                </div>
+
+                {/* Filter */}
+                <select
+                  value={filterStatus}
+                  onChange={(e) => setFilterStatus(e.target.value as any)}
+                  className="px-4 py-2 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition font-medium"
+                >
+                  <option value="all">All Status</option>
+                  <option value="complete">✅ Complete</option>
+                  <option value="incomplete">⏳ Incomplete</option>
+                </select>
+              </div>
             )}
           </div>
 
@@ -291,10 +416,26 @@ export default function StudentDashboard() {
             )
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {submissions.map((submission) => {
+              {filteredSubmissions.map((submission) => {
                 const formData = submission.form_data || {};
+                const isComplete = formData.documentUrls && formData.documentUrls.length > 0;
+                
                 return (
                   <div key={submission.id} className="group bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl p-6 border-2 border-gray-200 hover:border-blue-300 hover:shadow-xl transition-all duration-200">
+                    {/* Status Badge */}
+                    <div className="flex justify-between items-start mb-4">
+                      <span className={`px-3 py-1 rounded-full text-xs font-bold ${
+                        isComplete 
+                          ? 'bg-green-100 text-green-700 border border-green-300' 
+                          : 'bg-amber-100 text-amber-700 border border-amber-300'
+                      }`}>
+                        {isComplete ? '✅ Complete' : '⏳ Incomplete'}
+                      </span>
+                      <span className="text-xs text-gray-500">
+                        ID: {submission.student_id}
+                      </span>
+                    </div>
+
                     <div className="flex gap-4 mb-4">
                       {submission.photo_url ? (
                         <img
@@ -369,6 +510,28 @@ export default function StudentDashboard() {
                   </div>
                 );
               })}
+            </div>
+          )}
+
+          {/* No Results Found */}
+          {submissions.length > 0 && filteredSubmissions.length === 0 && (
+            <div className="text-center py-12">
+              <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg className="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              </div>
+              <h4 className="text-lg font-semibold text-gray-700 mb-2">No submissions found</h4>
+              <p className="text-gray-500 mb-4">Try adjusting your search or filter</p>
+              <button
+                onClick={() => {
+                  setSearchTerm('');
+                  setFilterStatus('all');
+                }}
+                className="text-blue-600 hover:text-blue-700 font-medium"
+              >
+                Clear filters
+              </button>
             </div>
           )}
         </div>

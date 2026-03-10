@@ -383,13 +383,8 @@ export default function InventoryForm() {
           <form 
             onSubmit={(e) => {
               e.preventDefault();
-              // Only submit if on Section 3
-              if (currentSection === 3) {
-                handleSubmit(e);
-              } else {
-                // If not on section 3, move to next section
-                setCurrentSection(currentSection + 1);
-              }
+              // Prevent form submission on Enter key or any accidental submit
+              // Only the Submit button should trigger submission
             }}
             className="space-y-6"
           >
@@ -974,7 +969,8 @@ export default function InventoryForm() {
                 </button>
               ) : (
                 <button
-                  type="submit"
+                  type="button"
+                  onClick={handleSubmit}
                   disabled={loading}
                   className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-xl font-medium hover:from-green-700 hover:to-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg hover:shadow-xl"
                 >

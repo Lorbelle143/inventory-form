@@ -409,6 +409,35 @@ export default function AdminDashboard() {
       </nav>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Quick Stats Summary Bar */}
+        <div className="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 rounded-2xl shadow-2xl p-6 mb-8 text-white">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+            <div className="text-center">
+              <p className="text-sm font-medium text-indigo-100 mb-1">Total Students</p>
+              <p className="text-4xl font-bold">{stats.totalStudents}</p>
+            </div>
+            <div className="text-center border-l border-white/20">
+              <p className="text-sm font-medium text-indigo-100 mb-1">Total Submissions</p>
+              <p className="text-4xl font-bold">{stats.totalSubmissions}</p>
+            </div>
+            <div className="text-center border-l border-white/20">
+              <p className="text-sm font-medium text-indigo-100 mb-1">Completion Rate</p>
+              <p className="text-4xl font-bold">
+                {stats.totalStudents > 0 ? Math.round((stats.totalSubmissions / stats.totalStudents) * 100) : 0}%
+              </p>
+            </div>
+            <div className="text-center border-l border-white/20">
+              <p className="text-sm font-medium text-indigo-100 mb-1">Active Today</p>
+              <p className="text-4xl font-bold">
+                {submissions.filter(s => {
+                  const today = new Date().toDateString();
+                  return new Date(s.created_at).toDateString() === today;
+                }).length}
+              </p>
+            </div>
+          </div>
+        </div>
+
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <button
@@ -1012,9 +1041,12 @@ function StudentModal({ mode, submission, onClose, onSave }: any) {
               </div>
             </div>
           ) : (
-            <form onSubmit={handleSubmit} onKeyDown={(e) => {
+            <form onSubmit={(e) => {
+              e.preventDefault();
+              // Prevent accidental form submission
+            }} onKeyDown={(e) => {
               // Prevent form submission on Enter key
-              if (e.key === 'Enter' && e.target instanceof HTMLInputElement) {
+              if (e.key === 'Enter') {
                 e.preventDefault();
               }
             }} className="space-y-4">
@@ -1292,7 +1324,8 @@ function StudentModal({ mode, submission, onClose, onSave }: any) {
                   Cancel
                 </button>
                 <button
-                  type="submit"
+                  type="button"
+                  onClick={handleSubmit}
                   className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
                 >
                   {mode === 'create' ? 'Create' : 'Save Changes'}
