@@ -2,9 +2,20 @@
 export const printSubmission = (submission: any) => {
   const formData = submission.form_data || {};
   
-  const printWindow = window.open('', '_blank');
-  if (!printWindow) {
-    alert('Please allow popups to print');
+  // Create a hidden iframe for printing instead of popup window
+  const iframe = document.createElement('iframe');
+  iframe.style.position = 'fixed';
+  iframe.style.right = '0';
+  iframe.style.bottom = '0';
+  iframe.style.width = '0';
+  iframe.style.height = '0';
+  iframe.style.border = 'none';
+  document.body.appendChild(iframe);
+
+  const iframeDoc = iframe.contentWindow?.document;
+  if (!iframeDoc) {
+    alert('Unable to open print dialog. Please try again.');
+    document.body.removeChild(iframe);
     return;
   }
 
@@ -13,12 +24,19 @@ export const printSubmission = (submission: any) => {
     <html>
     <head>
       <title>Student Inventory - ${submission.full_name}</title>
+      <meta charset="UTF-8">
       <style>
+        * {
+          margin: 0;
+          padding: 0;
+          box-sizing: border-box;
+        }
         body {
           font-family: Arial, sans-serif;
           padding: 40px;
           max-width: 800px;
           margin: 0 auto;
+          background: white;
         }
         .header {
           text-align: center;
@@ -28,11 +46,13 @@ export const printSubmission = (submission: any) => {
         }
         .header h1 {
           color: #1e40af;
-          margin: 0;
+          margin: 0 0 10px 0;
+          font-size: 24px;
         }
         .header p {
           color: #64748b;
           margin: 5px 0;
+          font-size: 14px;
         }
         .photo {
           text-align: center;
@@ -68,10 +88,12 @@ export const printSubmission = (submission: any) => {
           font-weight: bold;
           width: 200px;
           color: #475569;
+          font-size: 14px;
         }
         .field-value {
           flex: 1;
           color: #1e293b;
+          font-size: 14px;
         }
         .footer {
           margin-top: 40px;
@@ -85,8 +107,8 @@ export const printSubmission = (submission: any) => {
           body {
             padding: 20px;
           }
-          .no-print {
-            display: none;
+          @page {
+            margin: 1cm;
           }
         }
       </style>
@@ -100,7 +122,7 @@ export const printSubmission = (submission: any) => {
 
       ${submission.photo_url ? `
         <div class="photo">
-          <img src="${submission.photo_url}" alt="Student Photo" />
+          <img src="${submission.photo_url}" alt="Student Photo" crossorigin="anonymous" />
         </div>
       ` : ''}
 
@@ -192,33 +214,50 @@ export const printSubmission = (submission: any) => {
         <p>Printed on: ${new Date().toLocaleString()}</p>
         <p>Submitted on: ${new Date(submission.created_at).toLocaleString()}</p>
       </div>
-
-      <div class="no-print" style="text-align: center; margin-top: 20px;">
-        <button onclick="window.print()" style="padding: 10px 20px; background: #2563eb; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 16px;">
-          Print Document
-        </button>
-        <button onclick="window.close()" style="padding: 10px 20px; background: #64748b; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; margin-left: 10px;">
-          Close
-        </button>
-      </div>
     </body>
     </html>
   `;
 
-  printWindow.document.write(html);
-  printWindow.document.close();
-  
-  // Auto-trigger print dialog after a short delay to ensure content is loaded
-  setTimeout(() => {
-    printWindow.print();
-  }, 500);
+  iframeDoc.open();
+  iframeDoc.write(html);
+  iframeDoc.close();
+
+  // Wait for content to load, then print
+  iframe.onload = () => {
+    setTimeout(() => {
+      try {
+        iframe.contentWindow?.focus();
+        iframe.contentWindow?.print();
+        
+        // Clean up after printing
+        setTimeout(() => {
+          document.body.removeChild(iframe);
+        }, 1000);
+      } catch (error) {
+        console.error('Print error:', error);
+        alert('Unable to print. Please check your printer connection and try again.');
+        document.body.removeChild(iframe);
+      }
+    }, 500);
+  };
 };
 
 // Print all submissions (for admin)
 export const printAllSubmissions = (submissions: any[]) => {
-  const printWindow = window.open('', '_blank');
-  if (!printWindow) {
-    alert('Please allow popups to print');
+  // Create a hidden iframe for printing
+  const iframe = document.createElement('iframe');
+  iframe.style.position = 'fixed';
+  iframe.style.right = '0';
+  iframe.style.bottom = '0';
+  iframe.style.width = '0';
+  iframe.style.height = '0';
+  iframe.style.border = 'none';
+  document.body.appendChild(iframe);
+
+  const iframeDoc = iframe.contentWindow?.document;
+  if (!iframeDoc) {
+    alert('Unable to open print dialog. Please try again.');
+    document.body.removeChild(iframe);
     return;
   }
 
@@ -242,10 +281,17 @@ export const printAllSubmissions = (submissions: any[]) => {
     <html>
     <head>
       <title>Student Inventory Report</title>
+      <meta charset="UTF-8">
       <style>
+        * {
+          margin: 0;
+          padding: 0;
+          box-sizing: border-box;
+        }
         body {
           font-family: Arial, sans-serif;
           padding: 20px;
+          background: white;
         }
         .header {
           text-align: center;
@@ -253,7 +299,13 @@ export const printAllSubmissions = (submissions: any[]) => {
         }
         .header h1 {
           color: #1e40af;
-          margin: 0;
+          margin: 0 0 10px 0;
+          font-size: 24px;
+        }
+        .header p {
+          color: #64748b;
+          margin: 5px 0;
+          font-size: 14px;
         }
         table {
           width: 100%;
@@ -264,10 +316,12 @@ export const printAllSubmissions = (submissions: any[]) => {
           border: 1px solid #ddd;
           padding: 8px;
           text-align: left;
+          font-size: 12px;
         }
         th {
           background-color: #2563eb;
           color: white;
+          font-weight: bold;
         }
         tr:nth-child(even) {
           background-color: #f8fafc;
@@ -279,8 +333,8 @@ export const printAllSubmissions = (submissions: any[]) => {
           font-size: 12px;
         }
         @media print {
-          .no-print {
-            display: none;
+          @page {
+            margin: 1cm;
           }
         }
       </style>
@@ -313,24 +367,30 @@ export const printAllSubmissions = (submissions: any[]) => {
         <p>Total Students: ${submissions.length}</p>
         <p>Generated on: ${new Date().toLocaleString()}</p>
       </div>
-
-      <div class="no-print" style="text-align: center; margin-top: 20px;">
-        <button onclick="window.print()" style="padding: 10px 20px; background: #2563eb; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 16px;">
-          Print Report
-        </button>
-        <button onclick="window.close()" style="padding: 10px 20px; background: #64748b; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; margin-left: 10px;">
-          Close
-        </button>
-      </div>
     </body>
     </html>
   `;
 
-  printWindow.document.write(html);
-  printWindow.document.close();
-  
-  // Auto-trigger print dialog after a short delay to ensure content is loaded
-  setTimeout(() => {
-    printWindow.print();
-  }, 500);
+  iframeDoc.open();
+  iframeDoc.write(html);
+  iframeDoc.close();
+
+  // Wait for content to load, then print
+  iframe.onload = () => {
+    setTimeout(() => {
+      try {
+        iframe.contentWindow?.focus();
+        iframe.contentWindow?.print();
+        
+        // Clean up after printing
+        setTimeout(() => {
+          document.body.removeChild(iframe);
+        }, 1000);
+      } catch (error) {
+        console.error('Print error:', error);
+        alert('Unable to print. Please check your printer connection and try again.');
+        document.body.removeChild(iframe);
+      }
+    }, 500);
+  };
 };
