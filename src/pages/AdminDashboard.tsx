@@ -175,19 +175,6 @@ export default function AdminDashboard() {
     setShowUserModal(true);
   };
 
-  const handleChangePassword = (user: any) => {
-    setSelectedUser(user);
-    setUserFormData({
-      full_name: '',
-      student_id: '',
-      email: '',
-      password: '',
-      confirmPassword: ''
-    });
-    setUserModalMode('password');
-    setShowUserModal(true);
-  };
-
   const handleDeleteUser = async (userId: string, userName: string) => {
     if (!confirm(`Are you sure you want to delete ${userName}'s account?\n\nThis will:\n- Remove their profile from the system\n- Keep their inventory submissions\n\nNote: Their login account will remain in the authentication system but they won't be able to access the portal without a profile.\n\nThis action cannot be undone.`)) {
       return;
