@@ -18,30 +18,57 @@ export default function EditProfile() {
 
   useEffect(() => {
     if (user) {
+      console.log('Current user:', user);
       loadProfile();
+    } else {
+      console.log('No user found, redirecting...');
+      navigate('/login');
     }
   }, [user]);
 
   const loadProfile = async () => {
-    if (!user) return;
-    
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', user.id)
-      .single();
-
-    if (error) {
-      toast.error('Failed to load profile');
+    if (!user) {
+      console.log('No user in loadProfile');
       return;
     }
+    
+    console.log('Loading profile for user ID:', user.id);
+    
+    try {
+      const { data, error, count } = await supabase
+        .from('profiles')
+        .select('*', { count: 'exact' })
+        .eq('id', user.id);
 
-    if (data) {
-      setProfile({
-        full_name: data.full_name || '',
-        student_id: data.student_id || '',
-        email: data.email || '',
-      });
+      console.log('Query result:', { data, error, count });
+
+      if (error) {
+        console.error('Profile load error:', error);
+        toast.error('Failed to load profile: ' + error.message);
+        return;
+      }
+
+      if (data && data.length > 0) {
+        const profileData = data[0];
+        console.log('Profile found:', profileData);
+        setProfile({
+          full_name: profileData.full_name || '',
+          student_id: profileData.student_id || '',
+          email: profileData.email || user.email || '',
+        });
+      } else {
+        console.log('No profile found for user - Profile was deleted');
+        toast.error('Your profile was deleted by admin. Please logout and contact administrator.');
+        
+        // Sign out the user after 3 seconds
+        setTimeout(async () => {
+          await supabase.auth.signOut();
+          navigate('/login');
+        }, 3000);
+      }
+    } catch (err: any) {
+      console.error('Load profile error:', err);
+      toast.error('Error loading profile: ' + err.message);
     }
   };
 
@@ -106,12 +133,7 @@ export default function EditProfile() {
             </div>
           </div>
 
-          <form onSubmit={handleSubmit} onKeyDown={(e) => {
-            // Prevent form submission on Enter key
-            if (e.key === 'Enter' && e.target instanceof HTMLInputElement) {
-              e.preventDefault();
-            }
-          }} className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-6">
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
                 Full Name
@@ -140,7 +162,7 @@ export default function EditProfile() {
 
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Email Address
+                Institutional Email
               </label>
               <input
                 type="email"
@@ -148,7 +170,7 @@ export default function EditProfile() {
                 disabled
                 className="w-full px-4 py-3 border border-gray-300 rounded-xl bg-gray-100 text-gray-500 cursor-not-allowed"
               />
-              <p className="text-xs text-gray-500 mt-1">Email cannot be changed</p>
+              <p className="text-xs text-gray-500 mt-1">Institutional email cannot be changed</p>
             </div>
 
             <div className="flex gap-4 pt-4">

@@ -91,18 +91,26 @@ export default function AdminDashboard() {
   };
 
   const handleDeleteStudent = async (id: string, studentName: string) => {
-    if (!confirm(`Are you sure you want to delete ${studentName}'s profile?\n\nThis will remove:\n- Student profile (login account)\n- Authentication account from Supabase\n\nTheir inventory submissions will remain in the system.\n\nThis action cannot be undone.`)) {
+    if (!confirm(`Are you sure you want to delete ${studentName}'s profile?\n\nThis will remove:\n- Student profile (login account)\n- Their inventory submissions\n\nNote: Their authentication account will remain in the system but they won't be able to login without a profile.\n\nThis action cannot be undone.`)) {
       return;
     }
 
     try {
       setActionLoading(true);
-      // Delete the auth user from Supabase Auth
-      const { error: authError } = await supabase.auth.admin.deleteUser(id);
       
-      if (authError) {
-        console.error('Error deleting auth user:', authError);
-        // Continue even if auth deletion fails (user might not exist in auth)
+      // First, delete all inventory submissions for this student
+      const { data: studentProfile } = await supabase
+        .from('profiles')
+        .select('student_id')
+        .eq('id', id)
+        .single();
+
+      if (studentProfile?.student_id) {
+        // Delete inventory submissions
+        await supabase
+          .from('inventory_submissions')
+          .delete()
+          .eq('student_id', studentProfile.student_id);
       }
 
       // Delete the student profile from profiles table
@@ -113,7 +121,7 @@ export default function AdminDashboard() {
 
       if (profileError) throw profileError;
 
-      toast.success('Student profile deleted successfully');
+      toast.success('Student profile and submissions deleted successfully');
       loadData();
     } catch (error: any) {
       console.error('Delete error:', error);

@@ -202,7 +202,7 @@ export default function Register() {
 
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-2">
-              NBSC Student Email
+              NBSC Institutional Email
             </label>
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">

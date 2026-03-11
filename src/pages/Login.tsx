@@ -44,7 +44,7 @@ export default function Login() {
         .single();
 
       if (profileError || !profile) {
-        setError('Student ID not found. Please register first or check your Student ID.');
+        setError('❌ Student ID not found. Your account may have been deleted by admin. Please contact the administrator or register again.');
         setLoading(false);
         return;
       }
@@ -70,6 +70,20 @@ export default function Login() {
         if (!data.user.email_confirmed_at) {
           setError('⚠️ Please verify your email first. Check your inbox for the confirmation link.');
           await supabase.auth.signOut(); // Sign out the unconfirmed user
+          setLoading(false);
+          return;
+        }
+
+        // Final check: Verify profile still exists after authentication
+        const { data: finalProfileCheck, error: finalCheckError } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', data.user.id)
+          .maybeSingle();
+
+        if (finalCheckError || !finalProfileCheck) {
+          setError('❌ Your account was deleted by admin. Please contact the administrator.');
+          await supabase.auth.signOut(); // Sign out immediately
           setLoading(false);
           return;
         }
@@ -220,14 +234,25 @@ export default function Login() {
         </form>
 
         {!isAdminLogin && (
-          <div className="mt-8 pt-6 border-t border-gray-200">
-            <p className="text-center text-sm text-gray-600">
-              Don't have an account?{' '}
-              <Link to="/register" className="text-indigo-600 hover:text-indigo-700 font-semibold hover:underline transition-colors">
-                Register here
+          <>
+            <div className="mt-6 text-center">
+              <Link 
+                to="/forgot-password" 
+                className="text-sm text-indigo-600 hover:text-indigo-700 font-semibold hover:underline transition-colors"
+              >
+                Forgot your password?
               </Link>
-            </p>
-          </div>
+            </div>
+
+            <div className="mt-6 pt-6 border-t border-gray-200">
+              <p className="text-center text-sm text-gray-600">
+                Don't have an account?{' '}
+                <Link to="/register" className="text-indigo-600 hover:text-indigo-700 font-semibold hover:underline transition-colors">
+                  Register here
+                </Link>
+              </p>
+            </div>
+          </>
         )}
 
         {/* Admin Login Toggle at Bottom */}

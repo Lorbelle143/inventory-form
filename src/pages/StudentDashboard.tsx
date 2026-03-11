@@ -35,9 +35,19 @@ export default function StudentDashboard() {
         .from('profiles')
         .select('*')
         .eq('id', user.id)
-        .single();
+        .maybeSingle();
       
       if (error) throw error;
+      
+      if (!data) {
+        toast.error('Your profile was deleted by admin. Logging out...');
+        setTimeout(async () => {
+          await signOut();
+          navigate('/login');
+        }, 2000);
+        return;
+      }
+      
       setProfile(data);
     } catch (error: any) {
       toast.error('Failed to load profile');
