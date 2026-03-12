@@ -9,6 +9,7 @@ import AdminDashboard from './pages/AdminDashboard';
 import InventoryForm from './pages/InventoryForm';
 import ForgotPassword from './pages/ForgotPassword';
 import EditProfile from './pages/EditProfile';
+import MentalHealthAssessment from './pages/MentalHealthAssessment';
 import LoadingSpinner from './components/LoadingSpinner';
 
 function App() {
@@ -45,6 +46,7 @@ function App() {
           <Route path="/forgot-password" element={!user ? <ForgotPassword /> : <Navigate to="/dashboard" replace />} />
           <Route path="/dashboard" element={user && !isAdmin ? <StudentDashboard /> : <Navigate to="/login" replace />} />
           <Route path="/edit-profile" element={user && !isAdmin ? <EditProfile /> : <Navigate to="/login" replace />} />
+          <Route path="/mental-health-assessment" element={user && !isAdmin ? <MentalHealthAssessment /> : <Navigate to="/login" replace />} />
           <Route path="/admin" element={user && isAdmin ? <AdminDashboard /> : <Navigate to="/login" replace />} />
           <Route path="/inventory-form" element={user ? <InventoryForm /> : <Navigate to="/login" replace />} />
           <Route path="/" element={<Navigate to={user ? (isAdmin ? "/admin" : "/dashboard") : "/login"} replace />} />

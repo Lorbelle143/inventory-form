@@ -5,6 +5,7 @@ import { supabase } from '../lib/supabase';
 import { useToastContext } from '../contexts/ToastContext';
 import { LoadingOverlay } from '../components/LoadingSpinner';
 import AdminAnalytics from '../components/AdminAnalytics';
+import MentalHealthAdmin from '../components/MentalHealthAdmin';
 import { printSubmission, printAllSubmissions } from '../utils/printUtils';
 
 export default function AdminDashboard() {
@@ -18,7 +19,7 @@ export default function AdminDashboard() {
   const [showModal, setShowModal] = useState(false);
   const [modalMode, setModalMode] = useState<'view' | 'create' | 'edit'>('view');
   const [selectedSubmission, setSelectedSubmission] = useState<any>(null);
-  const [viewMode, setViewMode] = useState<'submissions' | 'students' | 'analytics' | 'users'>('submissions');
+  const [viewMode, setViewMode] = useState<'submissions' | 'students' | 'analytics' | 'users' | 'mental-health'>('submissions');
   const [actionLoading, setActionLoading] = useState(false);
   const [users, setUsers] = useState<any[]>([]);
   const [showUserModal, setShowUserModal] = useState(false);
@@ -767,11 +768,49 @@ export default function AdminDashboard() {
               Manage user accounts & passwords
             </p>
           </button>
+
+          <button
+            onClick={() => setViewMode('mental-health')}
+            className={`group bg-white rounded-2xl shadow-lg p-8 text-left transition-all duration-300 hover:shadow-2xl transform hover:-translate-y-1 ${
+              viewMode === 'mental-health' ? 'ring-4 ring-pink-400 ring-opacity-50' : ''
+            }`}
+          >
+            <div className="flex items-center justify-between mb-4">
+              <div className={`w-16 h-16 rounded-2xl flex items-center justify-center shadow-lg transition-all ${
+                viewMode === 'mental-health' 
+                  ? 'bg-gradient-to-br from-pink-500 to-rose-600' 
+                  : 'bg-gradient-to-br from-pink-400 to-rose-500 group-hover:from-pink-500 group-hover:to-rose-600'
+              }`}>
+                <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              {viewMode === 'mental-health' && (
+                <div className="px-3 py-1 bg-pink-100 text-pink-700 rounded-full text-xs font-bold">
+                  ACTIVE
+                </div>
+              )}
+            </div>
+            <h3 className="text-lg font-semibold text-gray-600 mb-2">Mental Health</h3>
+            <p className="text-5xl font-bold text-pink-600 mb-3">🧠</p>
+            <p className="text-sm text-gray-500 flex items-center gap-1">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+              </svg>
+              View student assessments & scores
+            </p>
+          </button>
         </div>
 
         {/* Analytics View */}
         {viewMode === 'analytics' && (
           <AdminAnalytics submissions={submissions} students={students} />
+        )}
+
+        {/* Mental Health View */}
+        {viewMode === 'mental-health' && (
+          <MentalHealthAdmin />
         )}
 
         {/* User Management View */}

@@ -11,11 +11,13 @@ export default function StudentDashboard() {
   const toast = useToastContext();
   const [profile, setProfile] = useState<any>(null);
   const [submissions, setSubmissions] = useState<any[]>([]);
+  const [mentalHealthAssessments, setMentalHealthAssessments] = useState<any[]>([]);
   const [showViewModal, setShowViewModal] = useState(false);
   const [selectedSubmission, setSelectedSubmission] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState<'all' | 'complete' | 'incomplete'>('all');
+  const [mentalHealthViewMode, setMentalHealthViewMode] = useState<'grid' | 'list'>('grid');
   const navigate = useNavigate();
 
   // Enable session timeout protection
@@ -25,6 +27,7 @@ export default function StudentDashboard() {
     if (user) {
       loadProfile();
       loadSubmissions();
+      loadMentalHealthAssessments();
     }
   }, [user]);
 
@@ -70,6 +73,22 @@ export default function StudentDashboard() {
       toast.error('Failed to load submissions');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadMentalHealthAssessments = async () => {
+    if (!user) return;
+    try {
+      const { data, error } = await supabase
+        .from('mental_health_assessments')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      setMentalHealthAssessments(data || []);
+    } catch (error: any) {
+      console.error('Failed to load mental health assessments:', error);
     }
   };
 
@@ -287,7 +306,7 @@ export default function StudentDashboard() {
               <h3 className="text-xl font-bold text-gray-800">Quick Actions</h3>
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {/* Fill Form Card */}
               <button
                 onClick={() => navigate('/inventory-form')}
@@ -303,6 +322,23 @@ export default function StudentDashboard() {
                 </div>
                 <h4 className="text-lg font-bold mb-1">Fill New Form</h4>
                 <p className="text-sm text-blue-100">Submit your inventory information</p>
+              </button>
+
+              {/* Mental Health Assessment Card */}
+              <button
+                onClick={() => navigate('/mental-health-assessment')}
+                className="group bg-gradient-to-br from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white rounded-xl p-6 transition-all duration-200 transform hover:scale-105 shadow-lg hover:shadow-xl"
+              >
+                <div className="flex items-center justify-between mb-3">
+                  <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <svg className="w-5 h-5 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </div>
+                <h4 className="text-lg font-bold mb-1">Mental Health Test</h4>
+                <p className="text-sm text-green-100">Take BSRS-5 assessment</p>
               </button>
 
               {/* Submissions Stats Card - Now Clickable */}
@@ -545,6 +581,308 @@ export default function StudentDashboard() {
             </div>
           )}
         </div>
+
+        {/* Mental Health Assessments Section */}
+        {mentalHealthAssessments.length > 0 && (
+          <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100 mt-6">
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 bg-gradient-to-br from-pink-500 to-rose-600 rounded-xl flex items-center justify-center shadow-lg">
+                  <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-gray-800">Mental Health Assessments</h3>
+                  <p className="text-sm text-gray-500">
+                    {mentalHealthAssessments.length} assessment{mentalHealthAssessments.length !== 1 ? 's' : ''} completed
+                  </p>
+                </div>
+              </div>
+
+              {/* View Toggle Buttons */}
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setMentalHealthViewMode('grid')}
+                  className={`px-4 py-2 rounded-lg flex items-center gap-2 transition ${
+                    mentalHealthViewMode === 'grid' 
+                      ? 'bg-pink-600 text-white' 
+                      : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                  }`}
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+                  </svg>
+                  Grid
+                </button>
+                <button
+                  onClick={() => setMentalHealthViewMode('list')}
+                  className={`px-4 py-2 rounded-lg flex items-center gap-2 transition ${
+                    mentalHealthViewMode === 'list' 
+                      ? 'bg-pink-600 text-white' 
+                      : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                  }`}
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                  </svg>
+                  List
+                </button>
+              </div>
+            </div>
+
+            {/* Grid View */}
+            {mentalHealthViewMode === 'grid' && (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {mentalHealthAssessments.map((assessment) => {
+                const getRiskColor = (level: string) => {
+                  switch (level) {
+                    case 'immediate-support': return 'bg-red-100 text-red-800 border-red-300';
+                    case 'need-support': return 'bg-orange-100 text-orange-800 border-orange-300';
+                    default: return 'bg-green-100 text-green-800 border-green-300';
+                  }
+                };
+
+                const getRiskLabel = (level: string) => {
+                  switch (level) {
+                    case 'immediate-support': return 'NEED IMMEDIATE SUPPORT';
+                    case 'need-support': return 'YOU NEED SUPPORT';
+                    default: return 'DOING WELL';
+                  }
+                };
+
+                const getRiskIcon = (level: string) => {
+                  switch (level) {
+                    case 'immediate-support': return '🚨';
+                    case 'need-support': return '⚠️';
+                    default: return '✅';
+                  }
+                };
+
+                return (
+                  <div key={assessment.id} className="group bg-white rounded-xl p-6 border-2 border-gray-200 hover:border-pink-300 hover:shadow-xl transition-all duration-200">
+                    {/* Header with Risk Badge */}
+                    <div className="flex justify-between items-start mb-4">
+                      <span className={`px-3 py-1 rounded-full text-xs font-bold border-2 ${getRiskColor(assessment.risk_level)}`}>
+                        {getRiskIcon(assessment.risk_level)} {getRiskLabel(assessment.risk_level)}
+                      </span>
+                      <span className="text-xs text-gray-500 font-medium">
+                        BSRS-5
+                      </span>
+                    </div>
+
+                    {/* Score Display */}
+                    <div className="bg-gradient-to-br from-pink-50 to-rose-50 rounded-xl p-5 mb-4 border border-pink-200">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-xs text-gray-600 mb-1 font-medium">Total Score</p>
+                          <p className="text-4xl font-bold text-gray-800">{assessment.total_score}<span className="text-2xl text-gray-500">/20</span></p>
+                        </div>
+                        <div className="w-16 h-16 bg-gradient-to-br from-pink-500 to-rose-600 rounded-full flex items-center justify-center shadow-lg">
+                          <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Counseling Required Warning */}
+                    {assessment.requires_counseling && (
+                      <div className="bg-red-50 border-2 border-red-300 rounded-xl p-4 mb-4 shadow-sm">
+                        <div className="flex items-start gap-2 mb-2">
+                          <span className="text-xl">{getRiskIcon(assessment.risk_level)}</span>
+                          <div className="flex-1">
+                            <p className="text-xs font-bold text-red-800 mb-1">COUNSELING REQUIRED</p>
+                            <p className="text-xs text-red-700 mb-2">Please visit SC Room 108</p>
+                          </div>
+                        </div>
+                        <a
+                          href="https://docs.google.com/spreadsheets/d/1-80LunHLARHr83-yBFB9KGFObQMEM2mUIx4L1PXhgT0/edit?gid=0#gid=0"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 px-3 py-2 bg-red-600 text-white text-xs font-bold rounded-lg hover:bg-red-700 transition w-full justify-center"
+                        >
+                          📋 Appointment Form for Guidance
+                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                          </svg>
+                        </a>
+                      </div>
+                    )}
+
+                    {/* Date */}
+                    <div className="flex items-center gap-2 text-xs text-gray-500 mb-4 pb-4 border-b border-gray-200">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                      Submitted: {new Date(assessment.created_at).toLocaleDateString('en-US', { 
+                        year: 'numeric', 
+                        month: 'short', 
+                        day: 'numeric' 
+                      })}
+                    </div>
+
+                    {/* Detailed Scores */}
+                    <div className="space-y-3">
+                      <p className="text-xs font-bold text-gray-700 mb-2">Assessment Breakdown:</p>
+                      <div className="grid grid-cols-2 gap-2 text-xs">
+                        <div className="bg-gray-50 rounded-lg p-2 border border-gray-200">
+                          <p className="text-gray-600 mb-1">Feeling alone</p>
+                          <p className="font-bold text-gray-800">{assessment.feeling_alone}/4</p>
+                        </div>
+                        <div className="bg-gray-50 rounded-lg p-2 border border-gray-200">
+                          <p className="text-gray-600 mb-1">Feeling blue</p>
+                          <p className="font-bold text-gray-800">{assessment.feeling_blue}/4</p>
+                        </div>
+                        <div className="bg-gray-50 rounded-lg p-2 border border-gray-200">
+                          <p className="text-gray-600 mb-1">Easily annoyed</p>
+                          <p className="font-bold text-gray-800">{assessment.feeling_easily_annoyed}/4</p>
+                        </div>
+                        <div className="bg-gray-50 rounded-lg p-2 border border-gray-200">
+                          <p className="text-gray-600 mb-1">Tense/anxious</p>
+                          <p className="font-bold text-gray-800">{assessment.feeling_tense_anxious}/4</p>
+                        </div>
+                        <div className={`rounded-lg p-2 col-span-2 border-2 ${assessment.having_suicidal_thoughts > 0 ? 'bg-red-50 border-red-300' : 'bg-gray-50 border-gray-200'}`}>
+                          <p className="text-gray-600 mb-1">Suicidal thoughts</p>
+                          <p className={`font-bold ${assessment.having_suicidal_thoughts > 0 ? 'text-red-600' : 'text-gray-800'}`}>
+                            {assessment.having_suicidal_thoughts}/4
+                            {assessment.having_suicidal_thoughts > 0 && ' ⚠️'}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Counseling Notes (if any) */}
+                    {assessment.counseling_notes && (
+                      <div className="mt-4 bg-blue-50 border-2 border-blue-200 rounded-lg p-3">
+                        <p className="text-xs font-bold text-blue-800 mb-1 flex items-center gap-1">
+                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                          </svg>
+                          Counseling Notes:
+                        </p>
+                        <p className="text-xs text-blue-700">{assessment.counseling_notes}</p>
+                      </div>
+                    )}
+
+                    {/* Edit Button */}
+                    <button
+                      onClick={() => navigate(`/mental-health-assessment?edit=${assessment.id}`)}
+                      className="mt-4 w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-indigo-600 to-blue-600 text-white text-sm font-medium rounded-lg hover:from-indigo-700 hover:to-blue-700 transition shadow-md hover:shadow-lg"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                      </svg>
+                      Edit Assessment
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+            )}
+
+            {/* List View */}
+            {mentalHealthViewMode === 'list' && (
+              <div className="overflow-x-auto">
+                <table className="w-full border-collapse bg-white rounded-xl overflow-hidden">
+                  <thead className="bg-gradient-to-r from-pink-600 to-rose-600 text-white">
+                    <tr>
+                      <th className="px-4 py-3 text-left text-sm font-bold">Date</th>
+                      <th className="px-4 py-3 text-center text-sm font-bold">Score</th>
+                      <th className="px-4 py-3 text-center text-sm font-bold">Risk Level</th>
+                      <th className="px-4 py-3 text-center text-sm font-bold">Counseling</th>
+                      <th className="px-4 py-3 text-center text-sm font-bold">Breakdown</th>
+                      <th className="px-4 py-3 text-center text-sm font-bold">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {mentalHealthAssessments.map((assessment, index) => {
+                      const getRiskColor = (level: string) => {
+                        switch (level) {
+                          case 'immediate-support': return 'bg-red-100 text-red-800 border-red-300';
+                          case 'need-support': return 'bg-orange-100 text-orange-800 border-orange-300';
+                          default: return 'bg-green-100 text-green-800 border-green-300';
+                        }
+                      };
+
+                      const getRiskLabel = (level: string) => {
+                        switch (level) {
+                          case 'immediate-support': return 'NEED IMMEDIATE SUPPORT';
+                          case 'need-support': return 'YOU NEED SUPPORT';
+                          default: return 'DOING WELL';
+                        }
+                      };
+
+                      const getRiskIcon = (level: string) => {
+                        switch (level) {
+                          case 'immediate-support': return '🚨';
+                          case 'need-support': return '⚠️';
+                          default: return '✅';
+                        }
+                      };
+
+                      return (
+                        <tr key={assessment.id} className={`border-b hover:bg-pink-50 transition ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}`}>
+                          <td className="px-4 py-3 text-sm text-gray-700">
+                            {new Date(assessment.created_at).toLocaleDateString('en-US', { 
+                              year: 'numeric', 
+                              month: 'short', 
+                              day: 'numeric' 
+                            })}
+                          </td>
+                          <td className="px-4 py-3 text-center">
+                            <span className="text-2xl font-bold text-gray-800">{assessment.total_score}<span className="text-sm text-gray-500">/20</span></span>
+                          </td>
+                          <td className="px-4 py-3 text-center">
+                            <span className={`px-3 py-1 rounded-full text-xs font-bold border-2 inline-block ${getRiskColor(assessment.risk_level)}`}>
+                              {getRiskIcon(assessment.risk_level)} {getRiskLabel(assessment.risk_level)}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 text-center">
+                            {assessment.requires_counseling ? (
+                              <div className="flex flex-col items-center gap-1">
+                                <span className="text-red-600 font-bold text-sm">⚠️ Required</span>
+                                <a
+                                  href="https://docs.google.com/spreadsheets/d/1-80LunHLARHr83-yBFB9KGFObQMEM2mUIx4L1PXhgT0/edit?gid=0#gid=0"
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-xs text-red-700 hover:text-red-900 underline"
+                                >
+                                  Book Appointment
+                                </a>
+                              </div>
+                            ) : (
+                              <span className="text-gray-400 text-sm">Not Required</span>
+                            )}
+                          </td>
+                          <td className="px-4 py-3">
+                            <div className="flex flex-wrap gap-1 justify-center text-xs">
+                              <span className="px-2 py-1 bg-gray-100 rounded">Alone: {assessment.feeling_alone}</span>
+                              <span className="px-2 py-1 bg-gray-100 rounded">Blue: {assessment.feeling_blue}</span>
+                              <span className="px-2 py-1 bg-gray-100 rounded">Annoyed: {assessment.feeling_easily_annoyed}</span>
+                              <span className="px-2 py-1 bg-gray-100 rounded">Tense: {assessment.feeling_tense_anxious}</span>
+                              <span className={`px-2 py-1 rounded ${assessment.having_suicidal_thoughts > 0 ? 'bg-red-100 text-red-700 font-bold' : 'bg-gray-100'}`}>
+                                Suicidal: {assessment.having_suicidal_thoughts}
+                              </span>
+                            </div>
+                          </td>
+                          <td className="px-4 py-3 text-center">
+                            <button
+                              onClick={() => navigate(`/mental-health-assessment?edit=${assessment.id}`)}
+                              className="px-4 py-2 bg-gradient-to-r from-indigo-600 to-blue-600 text-white text-sm font-medium rounded-lg hover:from-indigo-700 hover:to-blue-700 transition"
+                            >
+                              ✏️ Edit
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* View Modal */}
