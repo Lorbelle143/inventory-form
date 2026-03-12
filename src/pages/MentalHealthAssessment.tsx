@@ -20,16 +20,22 @@ export default function MentalHealthAssessment() {
     feeling_blue: -1,
     feeling_easily_annoyed: -1,
     feeling_tense_anxious: -1,
+    feeling_inferior: -1,
     having_suicidal_thoughts: -1
   });
 
   const questions = [
-    { key: 'feeling_alone', text: 'I include falling asleep' },
-    { key: 'feeling_blue', text: 'I feeling blue' },
-    { key: 'feeling_easily_annoyed', text: 'I feeling easily annoyed or irritated' },
-    { key: 'feeling_tense_anxious', text: 'I feeling tense, anxious up' },
-    { key: 'having_suicidal_thoughts', text: 'Having suicidal thoughts' }
+    { key: 'feeling_alone', text: 'Trouble falling asleep' },
+    { key: 'feeling_blue', text: 'Feeling tense or keyed up' },
+    { key: 'feeling_easily_annoyed', text: 'Feeling easily annoyed or irritated' },
+    { key: 'feeling_tense_anxious', text: 'Feeling blue' },
+    { key: 'feeling_inferior', text: 'Feeling inferior to others' }
   ];
+
+  const suicidalQuestion = {
+    key: 'having_suicidal_thoughts',
+    text: 'Having suicidal thoughts'
+  };
 
   const options = [
     { value: 0, label: 'Never', emoji: '😊' },
@@ -74,6 +80,7 @@ export default function MentalHealthAssessment() {
           feeling_blue: data.feeling_blue,
           feeling_easily_annoyed: data.feeling_easily_annoyed,
           feeling_tense_anxious: data.feeling_tense_anxious,
+          feeling_inferior: data.feeling_inferior || 0,
           having_suicidal_thoughts: data.having_suicidal_thoughts
         });
       }
@@ -106,19 +113,31 @@ export default function MentalHealthAssessment() {
 
     setLoading(true);
     try {
-      const totalScore = Object.values(responses).reduce((sum, val) => sum + val, 0);
-      const hasSuicidalThoughts = responses.having_suicidal_thoughts > 0;
-      const requiresCounseling = totalScore >= 11 || hasSuicidalThoughts;
+      // Calculate total score (excluding suicidal thoughts)
+      const totalScore = responses.feeling_alone + 
+                        responses.feeling_blue + 
+                        responses.feeling_easily_annoyed + 
+                        responses.feeling_tense_anxious + 
+                        responses.feeling_inferior;
       
+      const hasSuicidalThoughts = responses.having_suicidal_thoughts > 0;
+      
+      // If has suicidal thoughts (even 1), automatic immediate support
       let riskLevel = 'doing-well';
       let riskMessage = 'You are doing well';
-      if (totalScore >= 14) {
+      
+      if (hasSuicidalThoughts) {
+        riskLevel = 'immediate-support';
+        riskMessage = 'Need immediate support';
+      } else if (totalScore >= 14) {
         riskLevel = 'immediate-support';
         riskMessage = 'Need immediate support';
       } else if (totalScore >= 11) {
         riskLevel = 'need-support';
         riskMessage = 'You need support';
       }
+      
+      const requiresCounseling = totalScore >= 11 || hasSuicidalThoughts;
 
       const assessmentData = {
         user_id: user?.id,
@@ -238,14 +257,45 @@ export default function MentalHealthAssessment() {
               </div>
             ))}
 
+            {/* Suicidal Thoughts Question - Separate, Not Included in Score */}
+            <div className="border-2 border-red-200 bg-red-50 rounded-xl p-6">
+              <p className="font-bold text-red-800 mb-2 flex items-center gap-2">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+                {suicidalQuestion.text}
+              </p>
+              <p className="text-xs text-red-700 mb-4">
+                This question is not included in your score, but any indication of suicidal thoughts requires immediate support.
+              </p>
+              <div className="grid grid-cols-5 gap-2">
+                {options.map((opt) => (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    onClick={() => setResponses({ ...responses, [suicidalQuestion.key]: opt.value })}
+                    className={`p-4 rounded-lg border-2 transition ${
+                      responses[suicidalQuestion.key as keyof typeof responses] === opt.value
+                        ? 'border-red-600 bg-red-100'
+                        : 'border-red-200 hover:border-red-400 bg-white'
+                    }`}
+                  >
+                    <div className="text-3xl mb-2">{opt.emoji}</div>
+                    <div className="text-xs font-medium">{opt.label}</div>
+                    <div className="text-xs text-gray-500">{opt.value}</div>
+                  </button>
+                ))}
+              </div>
+            </div>
+
             <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
               <p className="text-sm text-amber-800">
-                <strong>Note:</strong> Scoring Guide:<br/>
+                <strong>Note:</strong> Scoring Guide (Questions 1-5 only):<br/>
                 • <strong>0-10:</strong> You are doing well<br/>
                 • <strong>11-13:</strong> You need support<br/>
                 • <strong>14-20:</strong> Need immediate support<br/>
                 <br/>
-                If your score is 11 or above, or if you have suicidal thoughts, 
+                <strong className="text-red-700">⚠️ Important:</strong> If your score is 11 or above, or if you have ANY suicidal thoughts, 
                 please visit the Guidance Counseling Office at <strong>SC Room 108</strong>.
               </p>
             </div>

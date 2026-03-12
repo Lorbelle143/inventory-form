@@ -341,7 +341,7 @@ export default function StudentDashboard() {
                 <p className="text-sm text-green-100">Take BSRS-5 assessment</p>
               </button>
 
-              {/* Submissions Stats Card - Now Clickable */}
+              {/* Submissions Stats Card */}
               <button
                 onClick={() => {
                   // Scroll to submissions section
@@ -467,17 +467,17 @@ export default function StudentDashboard() {
                 const isComplete = formData.documentUrls && formData.documentUrls.length > 0;
                 
                 return (
-                  <div key={submission.id} className="group bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl p-6 border-2 border-gray-200 hover:border-blue-300 hover:shadow-xl transition-all duration-200">
+                  <div key={submission.id} className="group bg-white rounded-xl p-6 border-2 border-gray-200 hover:border-blue-400 hover:shadow-xl transition-all duration-200">
                     {/* Status Badge */}
                     <div className="flex justify-between items-start mb-4">
-                      <span className={`px-3 py-1 rounded-full text-xs font-bold ${
+                      <span className={`px-3 py-1.5 rounded-full text-xs font-bold border-2 ${
                         isComplete 
-                          ? 'bg-green-100 text-green-700 border border-green-300' 
-                          : 'bg-amber-100 text-amber-700 border border-amber-300'
+                          ? 'bg-green-50 text-green-700 border-green-300' 
+                          : 'bg-amber-50 text-amber-700 border-amber-300'
                       }`}>
                         {isComplete ? '✅ Complete' : '⏳ Incomplete'}
                       </span>
-                      <span className="text-xs text-gray-500">
+                      <span className="text-xs text-gray-500 font-medium">
                         ID: {submission.student_id}
                       </span>
                     </div>
@@ -487,10 +487,10 @@ export default function StudentDashboard() {
                         <img
                           src={submission.photo_url}
                           alt="Profile"
-                          className="w-24 h-24 rounded-xl object-cover shadow-md border-2 border-white"
+                          className="w-24 h-24 rounded-xl object-cover shadow-md border-2 border-gray-200"
                         />
                       ) : (
-                        <div className="w-24 h-24 rounded-xl bg-gradient-to-br from-blue-100 to-indigo-100 flex items-center justify-center shadow-md">
+                        <div className="w-24 h-24 rounded-xl bg-gradient-to-br from-blue-100 to-indigo-100 flex items-center justify-center shadow-md border-2 border-gray-200">
                           <svg className="w-12 h-12 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
                             <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
                           </svg>
@@ -498,7 +498,7 @@ export default function StudentDashboard() {
                       )}
                       <div className="flex-1">
                         <h4 className="font-bold text-gray-800 text-lg mb-1">{submission.course}</h4>
-                        <p className="text-sm text-gray-600 mb-1">Year {submission.year_level}</p>
+                        <p className="text-sm text-gray-600 mb-2">Year {submission.year_level}</p>
                         <div className="flex items-center gap-1 text-xs text-gray-500">
                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
@@ -510,7 +510,7 @@ export default function StudentDashboard() {
 
                     {/* Documents Badge */}
                     {formData.documentUrls && formData.documentUrls.length > 0 && (
-                      <div className="flex items-center gap-2 mb-4 px-3 py-2 bg-green-50 border border-green-200 rounded-lg">
+                      <div className="flex items-center gap-2 mb-4 px-3 py-2 bg-green-50 border-2 border-green-200 rounded-lg">
                         <svg className="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
@@ -520,7 +520,7 @@ export default function StudentDashboard() {
                       </div>
                     )}
 
-                    <div className="flex items-center gap-2 text-xs text-gray-500 mb-4 pb-4 border-b border-gray-300">
+                    <div className="flex items-center gap-2 text-xs text-gray-500 mb-4 pb-4 border-b border-gray-200">
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                       </svg>
@@ -532,10 +532,10 @@ export default function StudentDashboard() {
                     </div>
 
                     {/* Action Buttons */}
-                    <div className="grid grid-cols-2 gap-2">
+                    <div className="grid grid-cols-2 gap-3">
                       <button
                         onClick={() => handleView(submission)}
-                        className="flex items-center justify-center gap-1 px-3 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition shadow-md hover:shadow-lg"
+                        className="flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-sm font-medium rounded-lg hover:from-blue-700 hover:to-indigo-700 transition shadow-md hover:shadow-lg"
                       >
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -545,7 +545,7 @@ export default function StudentDashboard() {
                       </button>
                       <button
                         onClick={() => handleEdit(submission.id)}
-                        className="flex items-center justify-center gap-1 px-3 py-2.5 bg-amber-500 text-white text-sm font-medium rounded-lg hover:bg-amber-600 transition shadow-md hover:shadow-lg"
+                        className="flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-amber-500 to-orange-500 text-white text-sm font-medium rounded-lg hover:from-amber-600 hover:to-orange-600 transition shadow-md hover:shadow-lg"
                       >
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />

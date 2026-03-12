@@ -1051,10 +1051,11 @@ export default function AdminDashboard() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               {filteredAndSortedSubmissions.map((submission) => {
               const formData = submission.form_data || {};
+              const hasDocuments = formData.documentUrls && formData.documentUrls.length > 0;
               return (
-                <div key={submission.id} className="bg-white border rounded-lg shadow-sm hover:shadow-md transition overflow-hidden">
+                <div key={submission.id} className="bg-white border-2 border-gray-200 rounded-xl shadow-lg hover:shadow-xl hover:border-green-400 transition-all duration-200 overflow-hidden">
                   {/* Photo */}
-                  <div className="aspect-square bg-gray-100">
+                  <div className="aspect-square bg-gradient-to-br from-gray-100 to-gray-200 relative">
                     {submission.photo_url ? (
                       <img
                         src={submission.photo_url}
@@ -1062,50 +1063,79 @@ export default function AdminDashboard() {
                         className="w-full h-full object-cover"
                       />
                     ) : (
-                      <div className="w-full h-full flex items-center justify-center text-gray-400">
-                        <svg className="w-20 h-20" fill="currentColor" viewBox="0 0 20 20">
+                      <div className="w-full h-full flex items-center justify-center">
+                        <svg className="w-20 h-20 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
                           <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
                         </svg>
                       </div>
                     )}
+                    {/* Status Badge Overlay */}
+                    <div className="absolute top-2 right-2">
+                      <span className={`px-2 py-1 rounded-full text-xs font-bold border-2 ${
+                        hasDocuments 
+                          ? 'bg-green-50 text-green-700 border-green-300' 
+                          : 'bg-amber-50 text-amber-700 border-amber-300'
+                      }`}>
+                        {hasDocuments ? '✅' : '⏳'}
+                      </span>
+                    </div>
                   </div>
                   
                   {/* Info */}
                   <div className="p-4">
-                    <h3 className="font-bold text-gray-800 text-lg mb-1">
+                    <h3 className="font-bold text-gray-800 text-lg mb-1 truncate">
                       {formData.lastName || ''}, {formData.firstName || ''}
                     </h3>
-                    <p className="text-sm text-gray-600 mb-2">ID: {submission.student_id}</p>
-                    <p className="text-sm text-gray-700 mb-1">{submission.course}</p>
-                    <p className="text-sm text-gray-600 mb-2">Year {submission.year_level}</p>
-                    <p className="text-xs text-gray-500 mb-2">📞 {submission.contact_number}</p>
-                    <p className="text-xs text-gray-400">
-                      Submitted: {new Date(submission.created_at).toLocaleDateString()}
+                    <p className="text-xs text-gray-500 mb-3 font-medium">ID: {submission.student_id}</p>
+                    
+                    <div className="space-y-1 mb-3">
+                      <p className="text-sm text-gray-700 font-medium">{submission.course}</p>
+                      <p className="text-sm text-gray-600">Year {submission.year_level}</p>
+                      <div className="flex items-center gap-1 text-xs text-gray-500">
+                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                        </svg>
+                        {submission.contact_number}
+                      </div>
+                    </div>
+
+                    {/* Documents Badge */}
+                    {hasDocuments && (
+                      <div className="flex items-center gap-1 mb-3 px-2 py-1 bg-green-50 border border-green-200 rounded text-xs text-green-700 font-medium">
+                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        {formData.documentUrls.length} docs
+                      </div>
+                    )}
+                    
+                    <p className="text-xs text-gray-400 mb-3 pb-3 border-b border-gray-200">
+                      📅 {new Date(submission.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                     </p>
                     
                     {/* Action Buttons */}
                     <div className="grid grid-cols-2 gap-2">
                       <button
                         onClick={() => handleView(submission)}
-                        className="px-3 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition font-medium"
+                        className="px-3 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-xs rounded-lg hover:from-blue-700 hover:to-indigo-700 transition font-medium shadow-md"
                       >
                         👁️ View
                       </button>
                       <button
                         onClick={() => handleEdit(submission)}
-                        className="px-3 py-2 bg-amber-600 text-white text-sm rounded-lg hover:bg-amber-700 transition font-medium"
+                        className="px-3 py-2 bg-gradient-to-r from-amber-500 to-orange-500 text-white text-xs rounded-lg hover:from-amber-600 hover:to-orange-600 transition font-medium shadow-md"
                       >
                         ✏️ Edit
                       </button>
                       <button
                         onClick={() => printSubmission(submission)}
-                        className="px-3 py-2 bg-purple-600 text-white text-sm rounded-lg hover:bg-purple-700 transition font-medium"
+                        className="px-3 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white text-xs rounded-lg hover:from-purple-700 hover:to-indigo-700 transition font-medium shadow-md"
                       >
                         🖨️ Print
                       </button>
                       <button
                         onClick={() => handleDelete(submission.id, submission.full_name)}
-                        className="px-3 py-2 bg-red-600 text-white text-sm rounded-lg hover:bg-red-700 transition font-medium"
+                        className="px-3 py-2 bg-gradient-to-r from-red-600 to-rose-600 text-white text-xs rounded-lg hover:from-red-700 hover:to-rose-700 transition font-medium shadow-md"
                       >
                         🗑️ Delete
                       </button>
