@@ -14,7 +14,10 @@ export default function EditProfile() {
     full_name: '',
     student_id: '',
     email: '',
+    profile_picture: '',
   });
+  const [uploading, setUploading] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
   useEffect(() => {
     if (user) {
@@ -55,7 +58,9 @@ export default function EditProfile() {
           full_name: profileData.full_name || '',
           student_id: profileData.student_id || '',
           email: profileData.email || user.email || '',
+          profile_picture: profileData.profile_picture || '',
         });
+        setPreviewUrl(profileData.profile_picture || null);
       } else {
         console.log('No profile found for user - Profile was deleted');
         toast.error('Your profile was deleted by admin. Please logout and contact administrator.');
@@ -69,6 +74,59 @@ export default function EditProfile() {
     } catch (err: any) {
       console.error('Load profile error:', err);
       toast.error('Error loading profile: ' + err.message);
+    }
+  };
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      toast.error('Please upload an image file');
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Image size should be less than 5MB');
+      return;
+    }
+
+    setUploading(true);
+    try {
+      // Create a unique file name
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${user?.id}-${Date.now()}.${fileExt}`;
+      const filePath = `profile-pictures/${fileName}`;
+
+      // Upload to Supabase Storage
+      const { error: uploadError } = await supabase.storage
+        .from('profile-pictures')
+        .upload(filePath, file, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      // Get public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('profile-pictures')
+        .getPublicUrl(filePath);
+
+      // Update profile with new picture URL
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ profile_picture: publicUrl })
+        .eq('id', user?.id);
+
+      if (updateError) throw updateError;
+
+      setProfile({ ...profile, profile_picture: publicUrl });
+      setPreviewUrl(publicUrl);
+      toast.success('Profile picture updated!');
+    } catch (error: any) {
+      toast.error('Failed to upload image: ' + error.message);
+    } finally {
+      setUploading(false);
     }
   };
 
@@ -134,6 +192,46 @@ export default function EditProfile() {
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Profile Picture Upload */}
+            <div className="flex flex-col items-center gap-4 pb-6 border-b">
+              <div className="relative">
+                {previewUrl ? (
+                  <img
+                    src={previewUrl}
+                    alt="Profile"
+                    className="w-32 h-32 rounded-full object-cover border-4 border-blue-500 shadow-lg"
+                  />
+                ) : (
+                  <div className="w-32 h-32 rounded-full bg-gradient-to-br from-blue-500 to-indigo-500 flex items-center justify-center border-4 border-blue-500 shadow-lg">
+                    <span className="text-white text-4xl font-bold">
+                      {profile.full_name?.charAt(0) || 'S'}
+                    </span>
+                  </div>
+                )}
+                <label className="absolute bottom-0 right-0 w-10 h-10 bg-white rounded-full border-2 border-blue-500 flex items-center justify-center cursor-pointer hover:bg-blue-50 transition shadow-md">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageUpload}
+                    className="hidden"
+                    disabled={uploading}
+                  />
+                  {uploading ? (
+                    <LoadingSpinner size="sm" />
+                  ) : (
+                    <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                  )}
+                </label>
+              </div>
+              <div className="text-center">
+                <p className="text-sm font-medium text-gray-700">Profile Picture</p>
+                <p className="text-xs text-gray-500">Click the camera icon to upload</p>
+              </div>
+            </div>
+
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
                 Full Name

@@ -133,44 +133,109 @@ export default function StudentDashboard() {
   };
 
   return (
-    <div className="min-h-screen relative bg-cover bg-center bg-no-repeat" style={{ backgroundImage: 'url(https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcROE3tdSJOhol7z2c9L5Y6Sawh5ZmEU7GT8Dg&s)' }}>
-      {/* Frosted glass overlay - heavier blur and lighter for readability */}
-      <div className="absolute inset-0 bg-white/80 backdrop-blur-xl"></div>
-      
-      {/* Gradient mesh pattern overlay for professional look */}
-      <div className="absolute inset-0 bg-gradient-to-br from-blue-50/50 via-indigo-50/30 to-purple-50/50"></div>
-      
-      {/* Content wrapper */}
-      <div className="relative z-10">
-      {/* Header */}
-      <nav className="bg-white shadow-md border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-20">
-            <div className="flex items-center gap-4">
-              <img 
-                src="data:image/jpeg;base64,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" 
-                alt="NSCB Logo" 
-                className="w-16 h-16 object-contain"
-              />
-              <div>
-                <h1 className="text-2xl font-bold text-gray-800">Student Portal</h1>
-                <p className="text-xs text-gray-500">Guidance and Counseling Office</p>
-              </div>
+    <div className="flex h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
+      {/* Left Sidebar */}
+      <aside className="w-64 bg-white border-r border-gray-200 flex flex-col">
+        {/* Logo */}
+        <div className="h-20 flex items-center justify-center border-b border-gray-200 px-4">
+          <div className="flex items-center gap-2">
+            <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-lg flex items-center justify-center">
+              <span className="text-white font-bold text-lg">NB</span>
             </div>
-            <button
-              onClick={handleSignOut}
-              className="flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg transition border border-red-200"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-              </svg>
-              Sign Out
-            </button>
+            <div>
+              <h1 className="font-bold text-gray-800 text-sm">NBSC</h1>
+              <p className="text-xs text-gray-500">Student Portal</p>
+            </div>
           </div>
         </div>
-      </nav>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Navigation */}
+        <nav className="flex-1 py-6 px-3 space-y-1">
+          <button
+            className="w-full flex items-center gap-3 px-4 py-3 rounded-lg bg-blue-600 text-white"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+            </svg>
+            <span className="font-medium">Dashboard</span>
+          </button>
+
+          <button
+            onClick={() => navigate('/inventory-form')}
+            className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-gray-600 hover:bg-gray-100 transition-colors"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+            <span className="font-medium">New Form</span>
+          </button>
+
+          <button
+            onClick={() => navigate('/mental-health-assessment')}
+            className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-gray-600 hover:bg-gray-100 transition-colors"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span className="font-medium">Mental Health</span>
+          </button>
+
+          <button
+            onClick={() => navigate('/edit-profile')}
+            className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-gray-600 hover:bg-gray-100 transition-colors"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+            </svg>
+            <span className="font-medium">Profile</span>
+          </button>
+        </nav>
+
+        {/* Sign Out Button */}
+        <button
+          onClick={handleSignOut}
+          className="m-3 flex items-center justify-center gap-2 px-4 py-3 text-sm text-red-600 hover:bg-red-50 rounded-lg transition border border-red-200"
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+          </svg>
+          Sign Out
+        </button>
+      </aside>
+
+      {/* Main Content */}
+      <div className="flex-1 flex flex-col overflow-hidden">
+        {/* Top Header */}
+        <header className="h-20 bg-white border-b border-gray-200 flex items-center justify-between px-8">
+          <div>
+            <h2 className="text-2xl font-bold text-gray-800">Dashboard</h2>
+            <p className="text-sm text-gray-500">Welcome back, {profile?.full_name}!</p>
+          </div>
+          
+          <div className="flex items-center gap-4">
+            <button className="relative p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+              </svg>
+            </button>
+            <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-full flex items-center justify-center">
+              {profile?.profile_picture ? (
+                <img
+                  src={profile.profile_picture}
+                  alt="Profile"
+                  className="w-10 h-10 rounded-full object-cover"
+                />
+              ) : (
+                <span className="text-white font-semibold text-sm">
+                  {profile?.full_name?.charAt(0) || 'S'}
+                </span>
+              )}
+            </div>
+          </div>
+        </header>
+
+        {/* Content Area - Scrollable */}
+        <main className="flex-1 overflow-y-auto p-8">
         {/* Welcome Card */}
         <div className="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl shadow-xl p-8 mb-8 text-white">
           <div className="flex items-center justify-between">
@@ -251,52 +316,9 @@ export default function StudentDashboard() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-          {/* Profile Info Card */}
-          <div className="lg:col-span-1 bg-white rounded-xl shadow-lg p-6 border border-gray-100">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                </svg>
-              </div>
-              <h3 className="text-xl font-bold text-gray-800">Profile Information</h3>
-            </div>
-            <div className="space-y-4">
-              <div className="bg-gray-50 rounded-lg p-4">
-                <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Student ID</p>
-                <p className="font-semibold text-gray-800 text-lg">{profile?.student_id}</p>
-              </div>
-              <div className="bg-gray-50 rounded-lg p-4">
-                <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Email Address</p>
-                <p className="font-medium text-gray-700 text-sm break-all">{profile?.email}</p>
-              </div>
-              <div className="bg-gray-50 rounded-lg p-4">
-                <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Member Since</p>
-                <p className="font-medium text-gray-700">
-                  {profile?.created_at ? new Date(profile.created_at).toLocaleDateString('en-US', { 
-                    year: 'numeric', 
-                    month: 'long', 
-                    day: 'numeric' 
-                  }) : 'N/A'}
-                </p>
-              </div>
-              
-              {/* Edit Profile Button */}
-              <button
-                onClick={() => navigate('/edit-profile')}
-                className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-indigo-600 to-blue-600 text-white rounded-lg font-medium hover:from-indigo-700 hover:to-blue-700 transition-all shadow-md hover:shadow-lg"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                </svg>
-                Edit Profile
-              </button>
-            </div>
-          </div>
-
+        <div className="grid grid-cols-1 lg:grid-cols-1 gap-6 mb-8">
           {/* Quick Actions Card */}
-          <div className="lg:col-span-2 bg-white rounded-xl shadow-lg p-6 border border-gray-100">
+          <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100">
             <div className="flex items-center gap-3 mb-6">
               <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
                 <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -883,6 +905,7 @@ export default function StudentDashboard() {
             )}
           </div>
         )}
+        </main>
       </div>
 
       {/* View Modal */}
@@ -892,7 +915,6 @@ export default function StudentDashboard() {
           onClose={() => setShowViewModal(false)}
         />
       )}
-      </div>
     </div>
   );
 }
